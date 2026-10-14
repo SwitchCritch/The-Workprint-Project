@@ -1,6 +1,9 @@
 # The Workprint Project
 
-A dark, cinematic movie workprint catalogue website, built with Flask and SQLite.
+A retro VHS neon pink, purple and blue movie workprint catalogue website, built with Flask and SQLite.
+
+## Theme 3 — Retro VHS
+The entire interface has been restyled with neon pink, purple and electric blue; analogue tape cues, a tracking/status bar, retro typography, responsive poster cards, and matching admin forms. No film entries or files are included.
 
 ## Features
 - Public, searchable movie collection with poster cards, genre and year filters
