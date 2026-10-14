@@ -29,3 +29,7 @@ body.vhs-theme:before{content:'';pointer-events:none;position:fixed;inset:0;z-in
 .panel,.form-section{background:#100d24;border:1px solid #57347b;box-shadow:6px 6px 0 #1a1038}.panel h1{font-size:55px}.panel p,.hint{color:#b2a4c9}.form-section h2{font-size:30px;color:var(--cyan)}label{color:#e0d1f6}.flash{background:#17332d;border-color:#2f977e}.flash.error{background:#39122c;border-color:#e4568b}.footer{color:var(--accent);border-color:#463067}.footer span{color:#ad9abe}
 @media(max-width:720px){.bar{padding:16px 0}.brand-name{font-size:21px}.brand-name strong{font-size:19px}.bar nav{gap:3px}.bar nav a,.nav-button{padding:7px 9px;font-size:10px}.tape-bar .container span:nth-child(2){display:none}.hero{padding:80px 0 36px}.hero h1{font-size:clamp(52px,11vw,82px)}.hero:after{display:none}.stats{gap:12px;flex-wrap:wrap}.stats strong{font-size:28px}.movie-grid{gap:12px}.movie-body h3{font-size:21px}.movie-body p{font-size:10px}.detail-top{gap:32px}.filters{padding:10px}.footer{line-height:2}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* Custom neon projector branding */
+.site-header .site-logo{display:block;width:min(360px,48vw);height:94px;object-fit:contain;object-position:left center;filter:drop-shadow(0 0 12px #009dff55)}
+@media(max-width:720px){.site-header .site-logo{width:min(350px,85vw);height:82px}}

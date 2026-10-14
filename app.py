@@ -40,7 +40,7 @@ def init_db():
             genre TEXT, director TEXT, runtime TEXT, official_runtime TEXT,
             synopsis TEXT, differences TEXT, notes TEXT, source_details TEXT,
             file_size TEXT, file_format TEXT, video_resolution TEXT,
-            audio_details TEXT, download_url TEXT, poster TEXT,
+            audio_details TEXT, download_url TEXT, pixeldrain_url TEXT, poster TEXT,
             published INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL, updated_at TEXT NOT NULL
         );
@@ -50,9 +50,23 @@ def init_db():
             filename TEXT NOT NULL, caption TEXT NOT NULL DEFAULT ''
         );
         ''')
+        columns = {row['name'] for row in con.execute('PRAGMA table_info(movies)')}
+        if 'pixeldrain_url' not in columns:
+            con.execute('ALTER TABLE movies ADD COLUMN pixeldrain_url TEXT')
 
 
 init_db()
+
+
+@app.template_filter('pixeldrain_direct')
+def pixeldrain_direct(link):
+    if not link:
+        return ''
+    p = urlparse(link)
+    segments = p.path.strip('/').split('/')
+    if p.hostname not in ('pixeldrain.com', 'www.pixeldrain.com') or len(segments) != 2 or segments[0] != 'u' or not re.fullmatch(r'[A-Za-z0-9_-]{4,100}', segments[1]):
+        return ''
+    return f'https://pixeldrain.com/api/file/{segments[1]}?download'
 
 
 def admin_ok():
@@ -176,7 +190,7 @@ def logout():
 
 FIELDS = ['title', 'release_year', 'workprint_date', 'genre', 'director', 'runtime', 'official_runtime',
           'synopsis', 'differences', 'notes', 'source_details', 'file_size', 'file_format',
-          'video_resolution', 'audio_details', 'download_url']
+          'video_resolution', 'audio_details', 'download_url', 'pixeldrain_url']
 
 
 def get_fields():
@@ -194,6 +208,16 @@ def get_fields():
         p = urlparse(link)
         if p.scheme not in ('http', 'https') or not p.netloc or p.username or p.password:
             raise ValueError('Download link must be a valid HTTP(S) URL.')
+    pixeldrain = data['pixeldrain_url']
+    if pixeldrain:
+        p = urlparse(pixeldrain)
+        if p.scheme != 'https' or p.hostname not in ('pixeldrain.com', 'www.pixeldrain.com') or p.username or p.password or p.port not in (None, 443):
+            raise ValueError('Enter a valid HTTPS Pixeldrain file link (pixeldrain.com/u/FILE_ID).')
+        segments = p.path.strip('/').split('/')
+        if not (len(segments) == 2 and segments[0] == 'u' and re.fullmatch(r'[A-Za-z0-9_-]{4,100}', segments[1])) and not (len(segments) == 3 and segments[:2] == ['api', 'file'] and re.fullmatch(r'[A-Za-z0-9_-]{4,100}', segments[2])):
+            raise ValueError('Use a Pixeldrain individual file link (pixeldrain.com/u/FILE_ID), not a list or directory.')
+        file_id = segments[-1]
+        data['pixeldrain_url'] = f'https://pixeldrain.com/u/{file_id}'
     data['published'] = int(request.form.get('published') == 'on')
     return data
 

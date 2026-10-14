@@ -54,3 +54,8 @@ Back up `/data/workprints.db` and `/data/uploads/` regularly from your hosting v
 - No sample copyrighted movies or movie files are included.
 - This is a single-admin application, not a multi-user account system.
 - The external download destination is controlled by you; always review it before publishing.
+
+## Pixeldrain direct downloads + new logo
+The header uses your provided neon projector logo. In **Admin → Add workprint** or **Edit entry**, paste a **single-file** Pixeldrain URL such as `https://pixeldrain.com/u/FILE_ID` in **Pixeldrain file URL**. The movie detail page then shows **Download from Pixeldrain** (direct `https://pixeldrain.com/api/file/FILE_ID?download`) and **View on Pixeldrain**. Pixeldrain lists `/l/` are not supported for direct download; use the separate general external link field for those. Pixeldrain's rate limits, verification screens and permissions may prevent a direct download. The site does not proxy or host the video. Only link to content you have permission to share.
+
+The database upgrade is automatic: an existing `workprints.db` gets a new optional `pixeldrain_url` column without deleting your records. Keep the same Railway volume at `/data` and keep your existing environment variables.
