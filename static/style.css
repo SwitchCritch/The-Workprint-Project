@@ -37,3 +37,13 @@ body.vhs-theme:before{content:'';pointer-events:none;position:fixed;inset:0;z-in
 
 /* Category filter and labels */
 .filters select{min-width:150px;flex:1 1 150px}.filters input[name=year]{flex:0 1 110px}.poster-badge{max-width:calc(100% - 24px);text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+
+/* Enlarged central logo: four times the former 138px header image height. */
+.site-header .bar{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0;min-height:0;padding:10px 0 18px}
+.site-header .brand{width:100%;display:flex;justify-content:center;align-items:center}
+.site-header .site-logo{width:min(100%,1100px);height:552px;max-height:none;object-fit:contain;object-position:center center;filter:drop-shadow(0 0 18px #009dff70)}
+.site-header .bar nav{justify-content:center;gap:20px;padding-top:0}
+@media(max-width:980px){.site-header .bar{min-height:0}.site-header .site-logo{width:100%;height:min(53vw,440px)}}
+@media(max-width:720px){.site-header .bar{padding:12px 0 18px;gap:6px}.site-header .site-logo{width:100%;height:min(58vw,330px)}.site-header .bar nav{justify-content:center;gap:4px}}
+/* Oversize branding scrolls naturally, so the collection remains easy to browse. */
+.site-header{position:relative}
