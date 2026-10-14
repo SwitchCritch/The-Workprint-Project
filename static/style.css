@@ -9,7 +9,7 @@ body.vhs-theme{background:radial-gradient(ellipse at 85% 4%,rgba(115,25,160,.22)
 body.vhs-theme:before{content:'';pointer-events:none;position:fixed;inset:0;z-index:9;opacity:.11;background:repeating-linear-gradient(0deg,transparent 0,transparent 3px,#8878b0 4px,transparent 5px);mix-blend-mode:screen}
 .tracking-stripe{height:4px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--accent),var(--cyan));box-shadow:0 0 20px rgba(254,69,212,.65)}
 .site-header{background:rgba(8,6,25,.96);border-bottom:1px solid #44226c;box-shadow:0 8px 38px #0008;position:sticky;top:0;z-index:11;backdrop-filter:blur(20px)}
-.bar{min-height:96px}.brand-icon{font:900 18px 'Barlow Condensed',sans-serif;letter-spacing:1px;padding:13px;border:2px solid var(--cyan);box-shadow:4px 4px 0 var(--purple),0 0 20px #30c8ff39;color:var(--cyan)}.brand-icon .accent{color:var(--accent)}
+.bar{min-height:124px}.brand-icon{font:900 18px 'Barlow Condensed',sans-serif;letter-spacing:1px;padding:13px;border:2px solid var(--cyan);box-shadow:4px 4px 0 var(--purple),0 0 20px #30c8ff39;color:var(--cyan)}.brand-icon .accent{color:var(--accent)}
 .brand-name{font:900 24px/1 'Barlow Condensed',sans-serif;letter-spacing:1.5px;text-shadow:2px 2px 0 #411873}.brand-name strong{display:block;color:var(--accent);font-size:23px;letter-spacing:5px}.brand-name small{font:700 9px 'Space Mono',monospace;letter-spacing:1px;color:var(--cyan);margin-top:9px}
 .bar nav{gap:13px;flex-wrap:wrap}.bar nav a,.nav-button{font:700 11px 'Space Mono',monospace;color:#dcd3ef;padding:9px 11px;border-bottom:2px solid transparent}.bar nav a:hover,.nav-button:hover{border-color:var(--accent);color:var(--accent)}
 .tape-bar{border-bottom:1px solid #25213d;background:#0a0b24}.tape-bar .container{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;font:700 10px 'Space Mono',monospace;letter-spacing:1.2px;color:#a6a0c0}.tape-bar span:first-child{color:var(--accent)}.tape-bar b{color:var(--cyan);padding-left:14px}.timecode{color:var(--cyan)}
@@ -31,5 +31,6 @@ body.vhs-theme:before{content:'';pointer-events:none;position:fixed;inset:0;z-in
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
 /* Custom neon projector branding */
-.site-header .site-logo{display:block;width:min(360px,48vw);height:94px;object-fit:contain;object-position:left center;filter:drop-shadow(0 0 12px #009dff55)}
-@media(max-width:720px){.site-header .site-logo{width:min(350px,85vw);height:82px}}
+.site-header .site-logo{display:block;width:min(540px,62vw);max-width:100%;height:138px;object-fit:contain;object-position:left center;filter:drop-shadow(0 0 18px #009dff70)}
+@media(max-width:980px){.bar{min-height:112px}.site-header .site-logo{width:min(470px,70vw);height:118px}}
+@media(max-width:720px){.bar{min-height:0}.site-header .site-logo{width:min(430px,92vw);height:104px}}
