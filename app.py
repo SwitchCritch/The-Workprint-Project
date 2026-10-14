@@ -22,6 +22,7 @@ app.config['MAX_CONTENT_LENGTH'] = 12 * 1024 * 1024
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 ADMIN_PASSWORD_HASH = os.getenv('ADMIN_PASSWORD_HASH', '')
 ALLOWED_EXT = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
+CATEGORIES = ('Workprint', 'Alternate Version', 'CAM')
 
 
 def db():
@@ -36,7 +37,7 @@ def init_db():
         con.executescript('''
         CREATE TABLE IF NOT EXISTS movies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL, release_year INTEGER, workprint_date TEXT,
+            title TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'Workprint', release_year INTEGER, workprint_date TEXT,
             genre TEXT, director TEXT, runtime TEXT, official_runtime TEXT,
             synopsis TEXT, differences TEXT, notes TEXT, source_details TEXT,
             file_size TEXT, file_format TEXT, video_resolution TEXT,
@@ -53,6 +54,8 @@ def init_db():
         columns = {row['name'] for row in con.execute('PRAGMA table_info(movies)')}
         if 'pixeldrain_url' not in columns:
             con.execute('ALTER TABLE movies ADD COLUMN pixeldrain_url TEXT')
+        if 'category' not in columns:
+            con.execute("ALTER TABLE movies ADD COLUMN category TEXT NOT NULL DEFAULT 'Workprint'")
 
 
 init_db()
@@ -134,6 +137,7 @@ def health():
 def home():
     q = request.args.get('q', '').strip()
     genre = request.args.get('genre', '').strip()
+    category = request.args.get('category', '').strip()
     year = request.args.get('year', '').strip()
     sql = 'SELECT * FROM movies WHERE 1=1'
     vals = []
@@ -142,6 +146,9 @@ def home():
     if q:
         sql += ' AND (title LIKE ? OR synopsis LIKE ? OR differences LIKE ?)'
         vals += [f'%{q}%'] * 3
+    if category in CATEGORIES:
+        sql += ' AND category=?'
+        vals.append(category)
     if genre:
         sql += ' AND genre=?'
         vals.append(genre)
@@ -154,7 +161,7 @@ def home():
         genres = [x[0] for x in con.execute("SELECT DISTINCT genre FROM movies WHERE genre != '' AND genre IS NOT NULL ORDER BY genre").fetchall()]
         count = con.execute('SELECT COUNT(*) FROM movies WHERE published=1').fetchone()[0]
         screenshots = con.execute('SELECT COUNT(*) FROM screenshots').fetchone()[0]
-    return render_template('home.html', movies=movies, q=q, genre=genre, year=year, genres=genres, count=count, screenshots=screenshots)
+    return render_template('home.html', movies=movies, q=q, genre=genre, category=category, categories=CATEGORIES, year=year, genres=genres, count=count, screenshots=screenshots)
 
 
 @app.get('/workprint/<int:mid>')
@@ -188,7 +195,7 @@ def logout():
     return redirect(url_for('home'))
 
 
-FIELDS = ['title', 'release_year', 'workprint_date', 'genre', 'director', 'runtime', 'official_runtime',
+FIELDS = ['title', 'category', 'release_year', 'workprint_date', 'genre', 'director', 'runtime', 'official_runtime',
           'synopsis', 'differences', 'notes', 'source_details', 'file_size', 'file_format',
           'video_resolution', 'audio_details', 'download_url', 'pixeldrain_url']
 
@@ -197,6 +204,8 @@ def get_fields():
     data = {name: request.form.get(name, '').strip() for name in FIELDS}
     if not data['title']:
         raise ValueError('Movie title is required.')
+    if data['category'] not in CATEGORIES:
+        raise ValueError('Choose Workprint, Alternate Version or CAM.')
     if data['release_year']:
         if not re.fullmatch(r'\d{4}', data['release_year']):
             raise ValueError('Release year must be four digits.')
@@ -240,11 +249,11 @@ def add():
                     pic = image_save(file)
                     if pic:
                         con.execute('INSERT INTO screenshots (movie_id, filename) VALUES (?,?)', (mid, pic))
-            flash('Workprint added!', 'success')
+            flash('Movie added!', 'success')
             return redirect(url_for('detail', mid=mid))
         except ValueError as e:
             flash(str(e), 'error')
-    return render_template('form.html', movie=None, pics=[], heading='Add a workprint')
+    return render_template('form.html', movie=None, pics=[], heading='Add a movie')
 
 
 @app.route('/admin/edit/<int:mid>', methods=['GET', 'POST'])
@@ -276,7 +285,7 @@ def edit(mid):
             flash(str(e), 'error')
     with db() as con:
         pics = con.execute('SELECT * FROM screenshots WHERE movie_id=? ORDER BY id', (mid,)).fetchall()
-    return render_template('form.html', movie=movie, pics=pics, heading='Edit workprint')
+    return render_template('form.html', movie=movie, pics=pics, heading='Edit movie')
 
 
 @app.post('/admin/screenshot/<int:pic_id>/delete')

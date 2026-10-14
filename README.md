@@ -59,3 +59,7 @@ Back up `/data/workprints.db` and `/data/uploads/` regularly from your hosting v
 The header uses your provided neon projector logo. In **Admin → Add workprint** or **Edit entry**, paste a **single-file** Pixeldrain URL such as `https://pixeldrain.com/u/FILE_ID` in **Pixeldrain file URL**. The movie detail page then shows **Download from Pixeldrain** (direct `https://pixeldrain.com/api/file/FILE_ID?download`) and **View on Pixeldrain**. Pixeldrain lists `/l/` are not supported for direct download; use the separate general external link field for those. Pixeldrain's rate limits, verification screens and permissions may prevent a direct download. The site does not proxy or host the video. Only link to content you have permission to share.
 
 The database upgrade is automatic: an existing `workprints.db` gets a new optional `pixeldrain_url` column without deleting your records. Keep the same Railway volume at `/data` and keep your existing environment variables.
+
+### Movie categories
+
+Add/edit entries with **Category**: Workprint, Alternate Version, CAM. The library can filter by category; cards and details show the selected category. Existing database entries are automatically assigned **Workprint** at first startup after the upgrade. Keep the Railway volume and DATA_DIR configuration unchanged.
