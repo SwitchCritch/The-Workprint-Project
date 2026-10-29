@@ -63,3 +63,6 @@ The database upgrade is automatic: an existing `workprints.db` gets a new option
 ### Movie categories
 
 Add/edit entries with **Category**: Workprint, Alternate Version, CAM. The library can filter by category; cards and details show the selected category. Existing database entries are automatically assigned **Workprint** at first startup after the upgrade. Keep the Railway volume and DATA_DIR configuration unchanged.
+
+### Expanded archive categories
+The category dropdown and public filters now include Workprint, Alternate Version, CAM, 35mm, Screener, VHS, Betamax, and Laserdisc. Existing entries retain their assigned categories; database records are not reset by this update. For persistent data on Railway, keep DATA_DIR=/data and your volume mounted at /data.

@@ -22,7 +22,7 @@ app.config['MAX_CONTENT_LENGTH'] = 12 * 1024 * 1024
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 ADMIN_PASSWORD_HASH = os.getenv('ADMIN_PASSWORD_HASH', '')
 ALLOWED_EXT = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
-CATEGORIES = ('Workprint', 'Alternate Version', 'CAM')
+CATEGORIES = ('Workprint', 'Alternate Version', 'CAM', '35mm', 'Screener', 'VHS', 'Betamax', 'Laserdisc')
 
 
 def db():
@@ -205,7 +205,7 @@ def get_fields():
     if not data['title']:
         raise ValueError('Movie title is required.')
     if data['category'] not in CATEGORIES:
-        raise ValueError('Choose Workprint, Alternate Version or CAM.')
+        raise ValueError('Choose a valid movie category.')
     if data['release_year']:
         if not re.fullmatch(r'\d{4}', data['release_year']):
             raise ValueError('Release year must be four digits.')
@@ -253,7 +253,7 @@ def add():
             return redirect(url_for('detail', mid=mid))
         except ValueError as e:
             flash(str(e), 'error')
-    return render_template('form.html', movie=None, pics=[], heading='Add a movie')
+    return render_template('form.html', movie=None, pics=[], heading='Add a movie', categories=CATEGORIES)
 
 
 @app.route('/admin/edit/<int:mid>', methods=['GET', 'POST'])
@@ -285,7 +285,7 @@ def edit(mid):
             flash(str(e), 'error')
     with db() as con:
         pics = con.execute('SELECT * FROM screenshots WHERE movie_id=? ORDER BY id', (mid,)).fetchall()
-    return render_template('form.html', movie=movie, pics=pics, heading='Edit movie')
+    return render_template('form.html', movie=movie, pics=pics, heading='Edit movie', categories=CATEGORIES)
 
 
 @app.post('/admin/screenshot/<int:pic_id>/delete')
