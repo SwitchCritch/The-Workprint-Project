@@ -5,12 +5,11 @@
 <meta name="description" content="The Workprint Project — a curated database of workprints, screeners and rare film formats.">
 <title>{% block title %}The Workprint Project{% endblock %}</title>
 <link rel="icon" href="{{url_for('static',filename='favicon.svg')}}" type="image/svg+xml">
-<link rel="stylesheet" href="{{url_for('static',filename='style.css',v='dashboard-20261030-1')}}">
+<link rel="stylesheet" href="{{url_for('static',filename='style.css',v='logo-only-20261030-2')}}">
 </head>
 <body class="dashboard {% if request.endpoint == 'home' %}home-page{% else %}inner-page{% endif %}">
 <header class="site-header" id="top">
-<div class="hero-art" aria-label="The Workprint Project cinema archive"></div>
-<div class="mobile-brand"><a href="{{url_for('home')}}"><img src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"></a></div>
+<div class="hero-art"><a class="header-logo-link" href="{{url_for('home')}}" aria-label="The Workprint Project home"><img class="header-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"></a></div>
 <nav class="site-nav shell" aria-label="Primary navigation">
 <a class="{% if request.endpoint == 'home' %}active{% endif %}" href="{{url_for('home')}}"><span class="nav-icon">⌂</span> HOME</a>
 <a href="{{url_for('home')}}#latest"><span class="nav-icon">▦</span> BROWSE</a>

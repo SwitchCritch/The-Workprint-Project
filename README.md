@@ -5,17 +5,16 @@ A functional Flask + SQLite film archive redesigned to match the **Modern Databa
 ## What is in this GitHub ZIP?
 
 - `app.py` — Flask backend, database, admin login and persistent file uploads
-- `templates/base.html` — neon projector header and working navigation
+- `templates/base.html` — centred transparent Workprint Project logo on a plain dark header and working navigation
 - `templates/home.html` — statistics, film filters, dashboard sidebars, real latest additions and search
 - `templates/detail.html` — movie metadata, artwork, screenshots, comparisons, external download links
 - `templates/form.html` — add/edit films and screenshots; preserve existing metadata fields
 - `templates/login.html` — password-protected admin sign-in
 - `static/style.css` — responsive dark blue/cyan dashboard styling
-- `static/dashboard-hero.webp` — **reference-derived** cinematic header, with mockup design labels removed
-- `static/workprint-logo.png` — your original transparent projector logo, used on narrow screens
+- `static/workprint-logo.png` — your original transparent projector logo, used in the header at every screen size
 - `static/favicon.svg`, `Procfile`, `railway.json`, `requirements.txt`, `.gitignore`
 
-The dashboard contains real, working links and controls — not a screenshot used as an unclickable webpage. The header deliberately uses the artwork from your reference for a closer match. Movie posters, upload counts and information are drawn from your own data, **not fabricated sample records**.
+The dashboard contains real, working links and controls — not a screenshot used as an unclickable webpage. The old photographic video-store header has been removed entirely; only your transparent logo appears above the navigation. Movie posters, upload counts and information are drawn from your own data, **not fabricated sample records**.
 
 ## Categories
 
@@ -58,3 +57,7 @@ Then open `http://127.0.0.1:8080/`. The local instance uses `./data` if `DATA_DI
 ## Testing note
 
 The package's Python was syntax checked, all Jinja templates were compiled, and desktop/mobile visual layouts were rendered in a headless browser using illustrative data. The QA poster artwork was **not** packaged as a real film collection. This environment did not have a usable Flask installation for a complete local backend integration test or a live Railway deployment.
+
+## Logo-only header update (30 October 2026)
+
+The illustrated VHS shelves, posters and neon signage in the previous header have been removed. The header now displays only `static/workprint-logo.png`, centred on a plain dark background above the navigation. The former `static/dashboard-hero.webp` is intentionally omitted. All database, forms, Pixeldrain and Railway volume code is unchanged.
