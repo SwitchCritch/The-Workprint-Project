@@ -70,3 +70,9 @@ The category dropdown and public filters now include Workprint, Alternate Versio
 
 ## Design 1 — Classic Retro VHS update
 Updated header with the supplied large centred transparent neon logo, VHS shop inspired atmosphere, browsable category tiles, modernised cards and responsive navigation. All eight categories and Pixeldrain support remain. Keep Railway's **persistent volume** mounted to `/data` and set `DATA_DIR=/data` before adding films. Deploys without a volume may lose the movie database and uploaded images.
+
+
+## Design 1 exact-layout rebuild
+This version replaces the previous extra welcome hero with the mockup's layout: video-store backdrop, large centred logo, navbar beneath, eight category buttons, poster grid and compact archive search. Decorative video-store art is a locally bundled SVG (no external image dependency). Poster art for films appears from your uploads; empty databases show an empty collection rather than invented films.
+
+**GitHub:** Upload the *contents* of this ZIP into the repository root. Do not upload the ZIP as a single file. Preserve your Railway service volume mounted at `/data` and `DATA_DIR=/data` for database and screenshot persistence.

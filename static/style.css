@@ -74,3 +74,38 @@ body.vhs-theme{background:linear-gradient(90deg,rgba(1,1,8,.91),rgba(10,6,23,.85
 @media(max-width:1100px){.movie-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.site-header:before,.site-header:after{opacity:.25}}
 @media(max-width:760px){.site-header:before,.site-header:after{display:none}.site-header .bar{padding-top:10px}.site-header .site-logo{max-height:260px}.site-header nav{border-radius:8px 8px 0 0}.site-header nav a,.site-header .nav-button{padding:10px 9px;font-size:10px}.movie-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{padding:60px 0 33px}.shelf-head{flex-wrap:wrap}.category-pill{padding:8px 10px}}
 @media(max-width:420px){.site-header .site-logo{width:100%!important}.site-header nav{gap:0}.site-header nav a,.site-header .nav-button{font-size:9px;padding:9px 7px}.category-shelf{padding:15px}.hero h1{font-size:48px}}
+
+/* DESIGN 1 REBUILD: mockup-matched composition */
+:root{--accent:#ff4cba;--cyan:#60cfff;--bg:#080711;--line:#3a305d}
+body.vhs-theme{background:#090812;color:#f9f6ff}
+.tracking-stripe{height:3px;background:linear-gradient(90deg,#fb2fbc,#263fcb,#ff3a9a)}
+.storefront{position:relative;overflow:hidden;isolation:isolate;background:#0b0818 url('/static/vhs-store.svg') center center/cover no-repeat;min-height:540px;border-bottom:2px solid #58355b}
+.storefront-ambient{position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 50% 70% at 50% 32%,#143a6c80,transparent 75%),radial-gradient(circle at 55% 65%,#8b227840,transparent 55%)}
+.storefront-overlay{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#0008,transparent 23%,transparent 76%,#0008)}
+.storefront-content{position:relative;margin:auto;max-width:1300px;padding:30px 18px 0;display:flex;flex-direction:column;align-items:center}
+.storefront-label{width:min(900px,100%);display:flex;justify-content:space-between;font:700 10px 'Space Mono',monospace;color:#8bdcfc;letter-spacing:2px;text-shadow:0 0 10px #36afff}
+.storefront-label span:first-child{color:#ff6cc8}
+.storefront .brand{display:block;z-index:1;width:min(1050px,100%);margin:3px auto -9px;text-align:center}
+.storefront .site-logo{display:block;width:100%;height:auto;max-height:420px;object-fit:contain;filter:drop-shadow(0 0 22px #2687ff8c)}
+.storefront-neon{position:absolute;right:12px;top:140px;transform:rotate(2deg);color:#ff618b;border:2px solid #ff4166;padding:13px;font:800 20px/1.2 'Barlow Condensed',sans-serif;text-align:center;text-shadow:0 0 10px #fd216e,0 0 26px #ff2b7a;box-shadow:inset 0 0 16px #ef2e6690,0 0 16px #ee357f70;opacity:.8}
+.primary-nav{z-index:2;display:flex;align-items:stretch;justify-content:center;flex-wrap:wrap;width:min(1030px,100%);background:#080c1ce8;border:1px solid #44548d;border-radius:10px 10px 0 0;box-shadow:0 0 25px #1b2b9e66;margin-top:auto;overflow:hidden}
+.primary-nav a,.primary-nav .nav-button{display:inline-flex;align-items:center;justify-content:center;padding:14px 18px;font:800 12px 'Barlow Condensed',sans-serif;color:#e8ebff;letter-spacing:.8px;border:0;border-bottom:3px solid transparent;background:transparent;cursor:pointer}
+.primary-nav a:hover,.primary-nav a:first-child{color:#ffdb81;background:#1c172b;border-bottom-color:#f7aa35}
+.archive-body{background:linear-gradient(#070812,#090817),repeating-linear-gradient(0deg,transparent 0 20px,#383048 21px 22px)}
+.category-shelf{margin:0 auto;padding:18px 0 4px;background:transparent;border:0;box-shadow:none}
+.category-pills{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.category-pill{padding:8px 17px;border-radius:8px;background:linear-gradient(#282631,#111522);border:1px solid #515464;color:#f7f7ff;box-shadow:inset 0 1px 0 #ffffff19,0 2px 9px #000;font:700 11px 'Space Mono',monospace;letter-spacing:-.6px;white-space:nowrap}
+.category-pill:hover,.category-pill.selected{background:#ece9ef;color:#14121c;border-color:#fff;transform:none}
+.collection{padding-top:8px;padding-bottom:65px}
+.heading-row{margin:18px 0 15px}.heading-row h2{font:900 clamp(24px,3vw,36px) 'Barlow Condensed',sans-serif;margin:0;text-shadow:none}.count{font:700 10px 'Space Mono',monospace;color:#8f9aaf;vertical-align:middle;border:0;margin-left:10px}
+.all-link{font:700 12px 'Barlow Condensed',sans-serif;letter-spacing:1px;color:#e1e8ff}
+.movie-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+.movie-card{border:1px solid #45415c;background:#0e0d17;border-radius:5px;overflow:hidden;box-shadow:0 4px 18px #0008}
+.movie-card:hover{border-color:#c34af1;box-shadow:0 4px 18px #be29dc50;transform:translateY(-3px)}
+.poster{aspect-ratio:2/3}.poster-placeholder{font:800 24px/1.2 'Barlow Condensed',sans-serif;letter-spacing:1px;padding:16px;word-break:break-word}.poster-placeholder span{font-size:55px;display:block}
+.poster-badge{bottom:0;top:auto;left:0;width:100%;max-width:100%;text-align:center;background:#0b0a1bcf;color:#e2b4ff;padding:5px}
+.movie-body{padding:10px 9px 12px!important;text-align:center}.movie-body h3{font:800 19px/1.05 'Barlow Condensed',sans-serif;margin:3px 0 4px;text-transform:uppercase}.movie-format{font:700 9px 'Space Mono',monospace;color:#aaa3c3}
+.search-panel{margin-top:35px;border-top:1px solid #463568;padding-top:20px}.search-panel-heading{display:flex;gap:12px;align-items:center}.search-panel-heading span{color:#ff4cba}.search-panel h2{font-size:25px}.filters{margin:13px 0 0}
+.footer{background:#080714}
+@media(max-width:1100px){.storefront{min-height:0}.storefront .site-logo{max-height:370px}.storefront-neon{display:none}.movie-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:720px){.storefront-content{padding:12px 9px 0}.storefront-label{font-size:8px}.storefront-label span:nth-child(2){display:none}.storefront .brand{margin:0}.storefront .site-logo{max-height:280px}.primary-nav a,.primary-nav .nav-button{font-size:10px;padding:9px 10px}.category-shelf{padding-top:12px}.category-pill{font-size:10px;padding:7px 10px}.movie-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.count{display:block;margin:4px 0 0}.poster-badge{font-size:9px}.movie-body h3{font-size:18px}}
