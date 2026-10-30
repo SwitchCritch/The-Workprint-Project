@@ -66,3 +66,7 @@ Add/edit entries with **Category**: Workprint, Alternate Version, CAM. The libra
 
 ### Expanded archive categories
 The category dropdown and public filters now include Workprint, Alternate Version, CAM, 35mm, Screener, VHS, Betamax, and Laserdisc. Existing entries retain their assigned categories; database records are not reset by this update. For persistent data on Railway, keep DATA_DIR=/data and your volume mounted at /data.
+
+
+## Design 1 — Classic Retro VHS update
+Updated header with the supplied large centred transparent neon logo, VHS shop inspired atmosphere, browsable category tiles, modernised cards and responsive navigation. All eight categories and Pixeldrain support remain. Keep Railway's **persistent volume** mounted to `/data` and set `DATA_DIR=/data` before adding films. Deploys without a volume may lose the movie database and uploaded images.

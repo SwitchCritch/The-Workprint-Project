@@ -47,3 +47,30 @@ body.vhs-theme:before{content:'';pointer-events:none;position:fixed;inset:0;z-in
 @media(max-width:720px){.site-header .bar{padding:12px 0 18px;gap:6px}.site-header .site-logo{width:100%;height:min(58vw,330px)}.site-header .bar nav{justify-content:center;gap:4px}}
 /* Oversize branding scrolls naturally, so the collection remains easy to browse. */
 .site-header{position:relative}
+
+
+/* CLASSIC RETRO VHS — Design 1 : full-width centered neon branding / video store */
+:root{--bg:#070611;--panel:#121024;--panel2:#1b1531;--line:#4b306f;--text:#f8f5ff;--muted:#b5a8c9;--accent:#ff4abd;--cyan:#55dbff;--purple:#8f4eff}
+body.vhs-theme{background:linear-gradient(90deg,rgba(1,1,8,.91),rgba(10,6,23,.85),rgba(1,1,8,.91)),repeating-linear-gradient(90deg,#1b1435 0px,#1b1435 2px,#0b0919 3px,#0b0919 95px);min-height:100vh}
+.site-header{position:relative;background:radial-gradient(ellipse at 50% 20%,#182551 0%,#100c25 50%,#05040f 100%);box-shadow:inset 0 -5px 40px #06030e,0 0 22px #241342;border-bottom:1px solid #713c91}
+.site-header:before,.site-header:after{content:'';position:absolute;top:16px;bottom:80px;width:24%;opacity:.5;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 11px,#8c4de233 11px 13px,transparent 13px 23px),repeating-linear-gradient(0deg,#ec3aa42a 0 3px,transparent 3px 38px);border:2px solid #562a70;box-shadow:0 0 24px #d027ae33,inset 0 0 16px #1f0d38}
+.site-header:before{left:2.5%;transform:perspective(400px) rotateY(15deg)}
+.site-header:after{right:2.5%;transform:perspective(400px) rotateY(-15deg)}
+.site-header .bar{width:min(1300px,calc(100% - 28px));display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;padding:23px 0 0;min-height:0}
+.site-header .brand{position:relative;z-index:1;width:100%;display:flex;justify-content:center}
+.site-header .site-logo{width:min(1040px,95vw)!important;height:auto!important;max-height:490px;object-fit:contain;object-position:center;filter:drop-shadow(0 0 22px #1a95ff77)}
+.site-header nav{position:relative;z-index:2;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;width:min(980px,100%);gap:3px;padding:6px 10px;background:#070c1df0;border:1px solid #49528e;border-radius:12px 12px 0 0;box-shadow:0 0 22px #3c31d244}
+.site-header nav a,.site-header .nav-button{padding:12px 21px;letter-spacing:.5px;color:#eae5f8;border-bottom:2px solid transparent}
+.site-header nav a:hover{color:#ffdc62;border-bottom-color:#ffca5b}
+.tape-bar{background:#09081a;border-bottom-color:#513568}
+.hero{padding:70px 0 44px;position:relative;background:radial-gradient(circle at 95% 10%,#4f17565e 0%,transparent 44%),linear-gradient(125deg,#080814,#1b0d2d 56%,#090814);border-bottom:1px solid #70389b}
+.hero-inner{position:relative}.hero-label{color:var(--cyan);letter-spacing:3px;font-size:11px}.hero h1{font:900 clamp(46px,6.8vw,100px)/.94 'Barlow Condensed',Impact,sans-serif;margin:16px 0 18px;color:#f7f3ff;text-shadow:4px 4px 0 #422080}.hero h1 em{color:#ff6cca;text-shadow:2px 3px 0 #4b218a,0 0 32px #eb2583aa}.hero p{font-size:13px;max-width:690px}
+.stats{margin-top:48px;max-width:680px}.stats strong{color:#50d9ff}
+.category-shelf{margin-top:25px;background:linear-gradient(180deg,#1e1239,#0c0a20);border:1px solid #5d3483;box-shadow:0 6px 0 #05020d,0 0 24px #a526b01c;padding:20px 20px 22px}
+.shelf-head{display:flex;justify-content:space-between;gap:12px;color:#fa67ce;font:800 12px 'Space Mono',monospace;letter-spacing:1px;margin-bottom:14px}.shelf-head span:last-child{color:#66cfff}
+.category-pills{display:flex;flex-wrap:wrap;gap:9px}.category-pill{font:700 11px 'Space Mono',monospace;padding:9px 13px;background:#121225;border:1px solid #57477a;box-shadow:2px 3px 0 #070516;transition:transform .15s,background .15s}.category-pill:hover,.category-pill.selected{color:#140b22;background:#ff6dcb;border-color:#ff95dd;transform:translateY(-2px)}
+.collection{padding-top:44px}.heading-row h2{color:#f4f0ff;text-shadow:3px 3px 0 #421c63}.movie-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}.movie-card{border:1px solid #614073;background:#0f0a1c;box-shadow:0 4px 0 #040209}.movie-card:hover{transform:translateY(-6px);border-color:#ff5aca;box-shadow:0 0 20px #ef33c550,4px 4px 0 #49237c}.movie-card .movie-body{padding:14px}.poster-badge{background:#ff4bbc;color:#17081f}.movie-body h3{font-size:23px}
+.filters{margin-bottom:25px;border-color:#4d3178}.filters select{min-width:140px;flex:1 1 140px}
+@media(max-width:1100px){.movie-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.site-header:before,.site-header:after{opacity:.25}}
+@media(max-width:760px){.site-header:before,.site-header:after{display:none}.site-header .bar{padding-top:10px}.site-header .site-logo{max-height:260px}.site-header nav{border-radius:8px 8px 0 0}.site-header nav a,.site-header .nav-button{padding:10px 9px;font-size:10px}.movie-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{padding:60px 0 33px}.shelf-head{flex-wrap:wrap}.category-pill{padding:8px 10px}}
+@media(max-width:420px){.site-header .site-logo{width:100%!important}.site-header nav{gap:0}.site-header nav a,.site-header .nav-button{font-size:9px;padding:9px 7px}.category-shelf{padding:15px}.hero h1{font-size:48px}}
