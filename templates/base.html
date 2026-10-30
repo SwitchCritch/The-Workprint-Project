@@ -1,12 +1,31 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070612"><title>{% block title %}The Workprint Project{% endblock %}</title><link rel="stylesheet" href="{{url_for('static',filename='style.css')}}"></head>
-<body class="vhs-theme"><div class="tracking-stripe"></div>
-<header class="storefront"><div class="storefront-ambient" aria-hidden="true"></div><div class="storefront-overlay" aria-hidden="true"></div><div class="storefront-content">
-<div class="storefront-label"><span>◉ REC &nbsp; SP</span><span>THE ALTERNATE CINEMA ARCHIVE</span><span>PLAY ▷</span></div>
-<a class="brand" href="{{url_for('home')}}"><img class="site-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"></a>
-<div class="storefront-neon" aria-hidden="true">GOOD<br>MOVIES<br>NEVER<br>DIE</div>
-<nav class="primary-nav" aria-label="Main navigation"><a href="{{url_for('home')}}">⌂ &nbsp;HOME</a><a href="{{url_for('home')}}#collection">▣ &nbsp;BROWSE</a><a href="{{url_for('home')}}#categories">▤ &nbsp;CATEGORIES</a><a href="{{url_for('home')}}#collection">◷ &nbsp;LATEST</a><a href="{{url_for('home')}}#search-area">⌕ &nbsp;SEARCH</a>{% if is_admin %}<a href="{{url_for('add')}}">＋ ADD FILM</a><form class="inline" action="{{url_for('logout')}}" method="post"><input type="hidden" name="csrf_token" value="{{csrf_token}}"><button class="nav-button">LOG OUT</button></form>{% else %}<a href="{{url_for('login')}}">♙ &nbsp;ADMIN</a>{% endif %}</nav>
-</div></header>
-<main>{% with msgs=get_flashed_messages(with_categories=true) %}{% if msgs %}<div class="container flashes">{% for kind,msg in msgs %}<p class="flash {{kind}}">{{msg}}</p>{% endfor %}</div>{% endif %}{% endwith %}{% block body %}{% endblock %}</main>
-<footer><div class="container footer">◉ THE WORKPRINT PROJECT <span>REWIND THE HISTORY OF ALTERNATE CINEMA · Share only material you have permission to distribute.</span></div></footer>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070710"><title>{% block title %}The Workprint Project{% endblock %}</title>
+<link rel="stylesheet" href="{{url_for('static', filename='style.css')}}"></head>
+<body class="classic-vhs {% if request.endpoint == 'home' %}home-page{% else %}inner-page{% endif %}">
+<header class="storefront" id="top">
+  <div class="hero-visual">
+    {% if request.endpoint == 'home' %}
+      <a class="hero-logo-hitbox" href="{{url_for('home')}}" aria-label="The Workprint Project home"><span class="sr-only">The Workprint Project</span></a>
+      <img class="mobile-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"/>
+    {% else %}
+      <a class="inner-logo-link" href="{{url_for('home')}}"><img class="inner-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"></a>
+    {% endif %}
+  </div>
+  <nav class="primary-nav" aria-label="Main navigation">
+    <a class="{% if request.endpoint == 'home' %}active{% endif %}" href="{{url_for('home')}}"><span class="nav-symbol">⌂</span> HOME</a>
+    <a href="{{url_for('home')}}#collection"><span class="nav-symbol">▣</span> BROWSE</a>
+    <a href="{{url_for('home')}}#categories"><span class="nav-symbol">▤</span> CATEGORIES</a>
+    <a href="{{url_for('home')}}#collection"><span class="nav-symbol">◷</span> LATEST</a>
+    <a href="{{url_for('home')}}#search-area"><span class="nav-symbol">⌕</span> SEARCH</a>
+    {% if is_admin %}<a href="{{url_for('add')}}"><span class="nav-symbol">＋</span> ADD FILM</a>
+    <form method="post" class="inline" action="{{url_for('logout')}}"><input type="hidden" name="csrf_token" value="{{csrf_token}}"><button class="nav-button">LOG OUT</button></form>
+    {% else %}<a href="{{url_for('login')}}"><span class="nav-symbol">♙</span> ADMIN</a>{% endif %}
+  </nav>
+</header>
+<main class="archive-scene">
+ {% with msgs=get_flashed_messages(with_categories=true) %}{% if msgs %}<div class="container flashes">{% for kind,msg in msgs %}<p class="flash {{kind}}">{{msg}}</p>{% endfor %}</div>{% endif %}{% endwith %}
+ {% block body %}{% endblock %}
+</main>
+<footer><div class="container footer"><b>THE WORKPRINT PROJECT</b><span>REWIND THE HISTORY OF ALTERNATE CINEMA · Only share material you are authorised to distribute.</span></div></footer>
 </body></html>

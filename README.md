@@ -1,78 +1,42 @@
-# The Workprint Project
+# The Workprint Project — Classic Retro VHS (mockup match)
 
-A retro VHS neon pink, purple and blue movie workprint catalogue website, built with Flask and SQLite.
+This is a functional Flask/SQLite website rebuild based on the **first Classic Retro VHS screenshot** you supplied. The hero uses a bundled cropped image from that screenshot to preserve the exact video-store shelves, projector logo, wall posters and neon sign. The navigation bar, eight category tabs, movie poster links, search filters, detail pages and admin forms are functioning HTML—not part of a static website screenshot.
 
-## Theme 3 — Retro VHS
-The entire interface has been restyled with neon pink, purple and electric blue; analogue tape cues, a tracking/status bar, retro typography, responsive poster cards, and matching admin forms. No film entries or files are included.
+## How the first screenshot translates into the real site
+
+- **Header**: uses the genuine selected artwork. It also includes the large centred blue/orange projector logo as shown. The design-label caption appearing at the upper left is part of your original concept screenshot, not a separate website heading.
+- **Navigation**: working links right below the header image.
+- **Categories**: All, Workprint, Alternate Version, CAM, 35mm, Screener, VHS, Betamax, Laserdisc; each is clickable.
+- **Latest additions**: automatically displays YOUR saved films and poster uploads from the existing database. The mockup's five movie posters are not inserted as fictional archive records. The preview image supplied separately shows five reference cards to demonstrate the layout.
+- **Mobile**: uses your original transparent logo over a darkened store scene to stay legible.
+
+## Upload files to GitHub
+
+1. Extract this ZIP.
+2. Upload the project contents (`app.py`, `Procfile`, `railway.json`, `requirements.txt`, `static/`, `templates/`) to the **root** of your existing GitHub repository, replacing the matching old files.
+3. Commit and let Railway deploy.
+4. Do **not** upload film files or SQLite databases as part of website source updates.
+5. Your own uploaded posters automatically appear on their movie cards when the Railway volume is attached.
+
+## Persist the movie collection on Railway
+
+- Keep the same persistent **Railway volume mounted at `/data`**.
+- Keep **`DATA_DIR=/data`**, `ADMIN_PASSWORD`, and a stable `SECRET_KEY` in Railway variables.
+- `workprints.db` and `uploads/` both live under `/data`. Do not overwrite or detach the existing volume.
+- Back up `/data/workprints.db` and `/data/uploads` regularly.
+- If the films previously disappeared after redeployments, verify that the existing volume is still attached to the deployed service. Code updates cannot restore data already erased from ephemeral disk.
 
 ## Features
-- Public, searchable movie collection with poster cards, genre and year filters
-- Individual workprint pages documenting versions and differences from the official cut
-- Technical information: file size, format, resolution, audio, runtime and source
-- Optional external download link for **material you have permission to distribute**
-- Upload a poster and multiple screenshots
-- Password-protected admin area to add, edit, unpublish and delete entries
-- Responsive layout for mobile and desktop
-- Persistent SQLite database + uploaded image files
 
-## Run locally (Windows)
-Install Python 3.11 or newer, then in a terminal in this folder:
+Existing SQLite movie records and migrations are preserved. Admin can add/edit/delete films, upload posters and screenshots, enter synopsis, differences, notes, file size/format/resolution/source and Pixeldrain single-file links. Film pages provide an external download link for material you are authorised to share. The website itself does not store video files.
 
-```powershell
-py -m venv .venv
-.venv\Scripts\activate
+## Local test
+
+```bash
 pip install -r requirements.txt
-$env:ADMIN_PASSWORD = "replace-with-a-long-unique-password"
-$env:SECRET_KEY = "replace-with-a-long-random-secret"
+export ADMIN_PASSWORD='choose-a-unique-password'
+export SECRET_KEY='choose-a-long-random-secret'
 python app.py
 ```
-Open http://localhost:8080. Select **Admin**, log in, then **+ Add workprint**.
 
-## Host on Railway
-1. Unzip this project into a GitHub repository.
-2. In Railway select **New Project → Deploy from GitHub repo** and choose the repo.
-3. Under **Variables**, add:
-   - `ADMIN_PASSWORD` — your private long, unique administrator password. Do not share it.
-   - `SECRET_KEY` — a separate random string, ideally 64+ characters. Keep it stable across redeployments.
-   - `DATA_DIR` — `/data`
-4. Under the Railway service's **Volumes**, add a persistent volume mounted at **`/data`**. **Do this before adding entries**, or redeployment may wipe the SQLite database and uploaded images.
-5. Deploy and use Railway's generated public domain in **Settings → Networking**.
-6. Open `/login` to sign in and add your first entry.
-
-Railway can change its interface; the exact menu labels may vary.
-
-## Image uploads and download links
-- Screenshots and posters are hosted on your site's volume.
-- The site does **not** host or transfer film video files. An optional external HTTP/HTTPS link can be entered per film.
-- Only include links to media you're authorised to share; an existing copy online doesn't establish redistribution rights.
-- Forms are CSRF-protected and user-uploaded pictures are checked for file signature and extension.
-
-## Data backups
-Back up `/data/workprints.db` and `/data/uploads/` regularly from your hosting volume.
-
-## Notes
-- No sample copyrighted movies or movie files are included.
-- This is a single-admin application, not a multi-user account system.
-- The external download destination is controlled by you; always review it before publishing.
-
-## Pixeldrain direct downloads + new logo
-The header uses your provided neon projector logo. In **Admin → Add workprint** or **Edit entry**, paste a **single-file** Pixeldrain URL such as `https://pixeldrain.com/u/FILE_ID` in **Pixeldrain file URL**. The movie detail page then shows **Download from Pixeldrain** (direct `https://pixeldrain.com/api/file/FILE_ID?download`) and **View on Pixeldrain**. Pixeldrain lists `/l/` are not supported for direct download; use the separate general external link field for those. Pixeldrain's rate limits, verification screens and permissions may prevent a direct download. The site does not proxy or host the video. Only link to content you have permission to share.
-
-The database upgrade is automatic: an existing `workprints.db` gets a new optional `pixeldrain_url` column without deleting your records. Keep the same Railway volume at `/data` and keep your existing environment variables.
-
-### Movie categories
-
-Add/edit entries with **Category**: Workprint, Alternate Version, CAM. The library can filter by category; cards and details show the selected category. Existing database entries are automatically assigned **Workprint** at first startup after the upgrade. Keep the Railway volume and DATA_DIR configuration unchanged.
-
-### Expanded archive categories
-The category dropdown and public filters now include Workprint, Alternate Version, CAM, 35mm, Screener, VHS, Betamax, and Laserdisc. Existing entries retain their assigned categories; database records are not reset by this update. For persistent data on Railway, keep DATA_DIR=/data and your volume mounted at /data.
-
-
-## Design 1 — Classic Retro VHS update
-Updated header with the supplied large centred transparent neon logo, VHS shop inspired atmosphere, browsable category tiles, modernised cards and responsive navigation. All eight categories and Pixeldrain support remain. Keep Railway's **persistent volume** mounted to `/data` and set `DATA_DIR=/data` before adding films. Deploys without a volume may lose the movie database and uploaded images.
-
-
-## Design 1 exact-layout rebuild
-This version replaces the previous extra welcome hero with the mockup's layout: video-store backdrop, large centred logo, navbar beneath, eight category buttons, poster grid and compact archive search. Decorative video-store art is a locally bundled SVG (no external image dependency). Poster art for films appears from your uploads; empty databases show an empty collection rather than invented films.
-
-**GitHub:** Upload the *contents* of this ZIP into the repository root. Do not upload the ZIP as a single file. Preserve your Railway service volume mounted at `/data` and `DATA_DIR=/data` for database and screenshot persistence.
+Then open http://127.0.0.1:8080 . To test the layout without adding real movie records, see `preview-layout.png`, which is a *visual preview*, not the live catalogue.
