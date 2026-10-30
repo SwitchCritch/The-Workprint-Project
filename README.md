@@ -1,10 +1,10 @@
 # The Workprint Project — Classic Retro VHS (mockup match)
 
-This is a functional Flask/SQLite website rebuild based on the **first Classic Retro VHS screenshot** you supplied. The hero uses a bundled cropped image from that screenshot to preserve the exact video-store shelves, projector logo, wall posters and neon sign. The navigation bar, eight category tabs, movie poster links, search filters, detail pages and admin forms are functioning HTML—not part of a static website screenshot.
+This is a functional Flask/SQLite website rebuild based on the **first Classic Retro VHS screenshot** you supplied. The hero uses custom-generated artwork of a video store, featuring a cinematic projector logo, VHS shelves, film posters and neon signage. The navigation bar, eight category tabs, movie poster links, search filters, detail pages and admin forms are functioning HTML—not part of a static website screenshot.
 
 ## How the first screenshot translates into the real site
 
-- **Header**: uses the genuine selected artwork. It also includes the large centred blue/orange projector logo as shown. The design-label caption appearing at the upper left is part of your original concept screenshot, not a separate website heading.
+- **Header**: uses the genuine selected artwork. It also includes the large centred blue/orange projector logo as shown. The concept-board label ("1 CLASSIC RETRO VHS" and its explanatory caption) is intentionally removed from the bundled artwork; it does not appear anywhere on the actual site.
 - **Navigation**: working links right below the header image.
 - **Categories**: All, Workprint, Alternate Version, CAM, 35mm, Screener, VHS, Betamax, Laserdisc; each is clickable.
 - **Latest additions**: automatically displays YOUR saved films and poster uploads from the existing database. The mockup's five movie posters are not inserted as fictional archive records. The preview image supplied separately shows five reference cards to demonstrate the layout.
@@ -40,3 +40,6 @@ python app.py
 ```
 
 Then open http://127.0.0.1:8080 . To test the layout without adding real movie records, see `preview-layout.png`, which is a *visual preview*, not the live catalogue.
+
+### Header fix (30 October 2026)
+The large mockup-design number and caption have been removed from the actual header image. The header asset has been replaced, and CSS/asset URLs include a cache-busting version so browsers do not continue showing the old image.
