@@ -61,3 +61,13 @@ The package's Python was syntax checked, all Jinja templates were compiled, and 
 ## Logo-only header update (30 October 2026)
 
 The illustrated VHS shelves, posters and neon signage in the previous header have been removed. The header now displays only `static/workprint-logo.png`, centred on a plain dark background above the navigation. The former `static/dashboard-hero.webp` is intentionally omitted. All database, forms, Pixeldrain and Railway volume code is unchanged.
+
+
+## Film page layout and formatted comparisons (30 October 2026)
+
+- Film detail pages and add/edit forms are now centred with responsive maximum widths. The poster sits next to the title and technical details on desktop, and stacks neatly on mobile.
+- The **Differences from the official release** field is a WYSIWYG editor with bold, italic, underline, headings, bullet and numbered lists, links, and clear formatting. Click Edit entry on any film to use it. The field updates on Save.
+- Rich text is sanitised with `bleach` on save and on display. HTML scripts, styles and unsafe link protocols are stripped. Existing plain-text comparison notes continue to display as paragraphs and remain editable.
+- An additive database migration introduces `differences_is_html`, defaulting to 0. Existing film records, screenshots and Pixeldrain links remain untouched.
+- The new `static/rich-editor.js` is local and needs no external editor CDN; the browser requires JavaScript to interact with the formatting buttons.
+- **Keep your existing Railway volume mounted at `/data` and `DATA_DIR=/data`, and back up the volume before deploying.**

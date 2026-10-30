@@ -9,6 +9,8 @@ from urllib.parse import urlparse
 from flask import Flask, abort, flash, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
+from markupsafe import Markup, escape
+import bleach
 
 BASE = Path(__file__).resolve().parent
 # Prefer the mounted Railway volume automatically; DATA_DIR=/data remains recommended.
@@ -24,6 +26,9 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 ADMIN_PASSWORD_HASH = os.getenv('ADMIN_PASSWORD_HASH', '')
 ALLOWED_EXT = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
 CATEGORIES = ('Workprint', 'CAM', '35mm', 'Screener', 'VHS', 'Betamax', 'Laserdisc')
+RICH_TAGS = {'p', 'br', 'div', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a'}
+RICH_ATTRIBUTES = {'a': ['href', 'title']}
+
 
 
 def db():
@@ -40,7 +45,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL, category TEXT NOT NULL DEFAULT 'Workprint', release_year INTEGER, workprint_date TEXT,
             genre TEXT, director TEXT, runtime TEXT, official_runtime TEXT,
-            synopsis TEXT, differences TEXT, notes TEXT, source_details TEXT,
+            synopsis TEXT, differences TEXT, differences_is_html INTEGER NOT NULL DEFAULT 0, notes TEXT, source_details TEXT,
             file_size TEXT, file_format TEXT, video_resolution TEXT,
             audio_details TEXT, download_url TEXT, pixeldrain_url TEXT, poster TEXT,
             published INTEGER NOT NULL DEFAULT 1,
@@ -57,12 +62,31 @@ def init_db():
             con.execute('ALTER TABLE movies ADD COLUMN pixeldrain_url TEXT')
         if 'category' not in columns:
             con.execute("ALTER TABLE movies ADD COLUMN category TEXT NOT NULL DEFAULT 'Workprint'")
+        if 'differences_is_html' not in columns:
+            con.execute('ALTER TABLE movies ADD COLUMN differences_is_html INTEGER NOT NULL DEFAULT 0')
         # Preserve all movie records while removing the retired category from the site.
         # Existing "Alternate Version" entries become Workprints, and remain editable.
         con.execute("UPDATE movies SET category='Workprint' WHERE category='Alternate Version'")
 
 
 init_db()
+
+
+def clean_rich_html(value):
+    """Sanitise author-entered markup, leaving only basic document formatting."""
+    return bleach.clean(value or '', tags=RICH_TAGS, attributes=RICH_ATTRIBUTES,
+                        protocols={'https', 'http', 'mailto'}, strip=True)
+
+
+@app.template_filter('rich_differences')
+def rich_differences(value, is_html=0):
+    if not value:
+        return Markup('')
+    if is_html:
+        return Markup(clean_rich_html(value))
+    # Preserve old plain-text descriptions exactly; do not interpret them as HTML.
+    paragraphs = value.replace('\r\n', '\n').replace('\r', '\n').split('\n\n')
+    return Markup(''.join('<p>' + '<br>'.join(str(escape(part)) for part in para.split('\n')) + '</p>' for para in paragraphs))
 
 
 @app.template_filter('pixeldrain_direct')
@@ -229,6 +253,10 @@ def get_fields():
     data = {name: request.form.get(name, '').strip() for name in FIELDS}
     if not data['title']:
         raise ValueError('Movie title is required.')
+    if len(data['differences']) > 75000:
+        raise ValueError('Differences text is too long (maximum 75,000 characters).')
+    data['differences'] = clean_rich_html(data['differences'])
+    data['differences_is_html'] = 1
     if data['category'] not in CATEGORIES:
         raise ValueError('Choose a valid movie category.')
     if data['release_year']:
