@@ -11,7 +11,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 BASE = Path(__file__).resolve().parent
-DATA = Path(os.getenv('DATA_DIR', str(BASE / 'data')))
+# Prefer the mounted Railway volume automatically; DATA_DIR=/data remains recommended.
+DATA = Path(os.getenv('DATA_DIR', '/data' if Path('/data').is_dir() else str(BASE / 'data')))
 UPLOADS = DATA / 'uploads'
 DATA.mkdir(parents=True, exist_ok=True)
 UPLOADS.mkdir(parents=True, exist_ok=True)
@@ -22,7 +23,7 @@ app.config['MAX_CONTENT_LENGTH'] = 12 * 1024 * 1024
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 ADMIN_PASSWORD_HASH = os.getenv('ADMIN_PASSWORD_HASH', '')
 ALLOWED_EXT = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
-CATEGORIES = ('Workprint', 'Alternate Version', 'CAM', '35mm', 'Screener', 'VHS', 'Betamax', 'Laserdisc')
+CATEGORIES = ('Workprint', 'CAM', '35mm', 'Screener', 'VHS', 'Betamax', 'Laserdisc')
 
 
 def db():
@@ -56,6 +57,9 @@ def init_db():
             con.execute('ALTER TABLE movies ADD COLUMN pixeldrain_url TEXT')
         if 'category' not in columns:
             con.execute("ALTER TABLE movies ADD COLUMN category TEXT NOT NULL DEFAULT 'Workprint'")
+        # Preserve all movie records while removing the retired category from the site.
+        # Existing "Alternate Version" entries become Workprints, and remain editable.
+        con.execute("UPDATE movies SET category='Workprint' WHERE category='Alternate Version'")
 
 
 init_db()
@@ -160,8 +164,29 @@ def home():
         movies = con.execute(sql, vals).fetchall()
         genres = [x[0] for x in con.execute("SELECT DISTINCT genre FROM movies WHERE genre != '' AND genre IS NOT NULL ORDER BY genre").fetchall()]
         count = con.execute('SELECT COUNT(*) FROM movies WHERE published=1').fetchone()[0]
-        screenshots = con.execute('SELECT COUNT(*) FROM screenshots').fetchone()[0]
-    return render_template('home.html', movies=movies, q=q, genre=genre, category=category, categories=CATEGORIES, year=year, genres=genres, count=count, screenshots=screenshots)
+        screenshots = con.execute('''SELECT COUNT(*) FROM screenshots s
+            JOIN movies m ON m.id = s.movie_id WHERE m.published=1''').fetchone()[0]
+        category_counts = con.execute('''SELECT category, COUNT(*) AS total FROM movies
+            WHERE published=1 GROUP BY category ORDER BY total DESC, category''').fetchall()
+        active_categories = len(category_counts)
+        current_year = datetime.now(timezone.utc).year
+        new_this_year = con.execute('SELECT COUNT(*) FROM movies WHERE published=1 AND substr(created_at,1,4)=?', (str(current_year),)).fetchone()[0]
+        recent = con.execute('SELECT * FROM movies WHERE published=1 ORDER BY created_at DESC, id DESC LIMIT 5').fetchall()
+    return render_template('home.html', movies=movies, q=q, genre=genre, category=category, categories=CATEGORIES, year=year, genres=genres, count=count, screenshots=screenshots, category_counts=category_counts, active_categories=active_categories, new_this_year=new_this_year, current_year=current_year, recent=recent)
+
+
+@app.template_filter('numberfmt')
+def numberfmt(value):
+    return f'{int(value):,}'
+
+
+@app.get('/random')
+def random_movie():
+    with db() as con:
+        entry = con.execute('SELECT id FROM movies WHERE published=1 ORDER BY RANDOM() LIMIT 1').fetchone()
+    if not entry:
+        return redirect(url_for('home'))
+    return redirect(url_for('detail', mid=entry['id']))
 
 
 @app.get('/workprint/<int:mid>')
@@ -279,7 +304,7 @@ def edit(mid):
                     pic = image_save(file)
                     if pic:
                         con.execute('INSERT INTO screenshots (movie_id, filename) VALUES (?,?)', (mid, pic))
-            flash('Workprint updated.', 'success')
+            flash('Movie updated.', 'success')
             return redirect(url_for('detail', mid=mid))
         except ValueError as e:
             flash(str(e), 'error')
@@ -312,7 +337,7 @@ def delete(mid):
         con.execute('DELETE FROM movies WHERE id=?', (mid,))
     for filename in filenames + ([movie['poster']] if movie['poster'] else []):
         (UPLOADS / filename).unlink(missing_ok=True)
-    flash('Workprint deleted.', 'success')
+    flash('Movie deleted.', 'success')
     return redirect(url_for('home'))
 
 

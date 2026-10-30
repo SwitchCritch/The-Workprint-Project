@@ -1,45 +1,60 @@
-# The Workprint Project — Classic Retro VHS (mockup match)
+# THE WORKPRINT PROJECT — Modern Database Dashboard
 
-This is a functional Flask/SQLite website rebuild based on the **first Classic Retro VHS screenshot** you supplied. The hero uses custom-generated artwork of a video store, featuring a cinematic projector logo, VHS shelves, film posters and neon signage. The navigation bar, eight category tabs, movie poster links, search filters, detail pages and admin forms are functioning HTML—not part of a static website screenshot.
+A functional Flask + SQLite film archive redesigned to match the **Modern Database Dashboard** reference selected on 30 October 2026.
 
-## How the first screenshot translates into the real site
+## What is in this GitHub ZIP?
 
-- **Header**: uses the genuine selected artwork. It also includes the large centred blue/orange projector logo as shown. The concept-board label ("1 CLASSIC RETRO VHS" and its explanatory caption) is intentionally removed from the bundled artwork; it does not appear anywhere on the actual site.
-- **Navigation**: working links right below the header image.
-- **Categories**: All, Workprint, Alternate Version, CAM, 35mm, Screener, VHS, Betamax, Laserdisc; each is clickable.
-- **Latest additions**: automatically displays YOUR saved films and poster uploads from the existing database. The mockup's five movie posters are not inserted as fictional archive records. The preview image supplied separately shows five reference cards to demonstrate the layout.
-- **Mobile**: uses your original transparent logo over a darkened store scene to stay legible.
+- `app.py` — Flask backend, database, admin login and persistent file uploads
+- `templates/base.html` — neon projector header and working navigation
+- `templates/home.html` — statistics, film filters, dashboard sidebars, real latest additions and search
+- `templates/detail.html` — movie metadata, artwork, screenshots, comparisons, external download links
+- `templates/form.html` — add/edit films and screenshots; preserve existing metadata fields
+- `templates/login.html` — password-protected admin sign-in
+- `static/style.css` — responsive dark blue/cyan dashboard styling
+- `static/dashboard-hero.webp` — **reference-derived** cinematic header, with mockup design labels removed
+- `static/workprint-logo.png` — your original transparent projector logo, used on narrow screens
+- `static/favicon.svg`, `Procfile`, `railway.json`, `requirements.txt`, `.gitignore`
 
-## Upload files to GitHub
+The dashboard contains real, working links and controls — not a screenshot used as an unclickable webpage. The header deliberately uses the artwork from your reference for a closer match. Movie posters, upload counts and information are drawn from your own data, **not fabricated sample records**.
 
-1. Extract this ZIP.
-2. Upload the project contents (`app.py`, `Procfile`, `railway.json`, `requirements.txt`, `static/`, `templates/`) to the **root** of your existing GitHub repository, replacing the matching old files.
-3. Commit and let Railway deploy.
-4. Do **not** upload film files or SQLite databases as part of website source updates.
-5. Your own uploaded posters automatically appear on their movie cards when the Railway volume is attached.
+## Categories
 
-## Persist the movie collection on Railway
+**Workprint, CAM, 35mm, Screener, VHS, Betamax and Laserdisc**.
 
-- Keep the same persistent **Railway volume mounted at `/data`**.
-- Keep **`DATA_DIR=/data`**, `ADMIN_PASSWORD`, and a stable `SECRET_KEY` in Railway variables.
-- `workprints.db` and `uploads/` both live under `/data`. Do not overwrite or detach the existing volume.
-- Back up `/data/workprints.db` and `/data/uploads` regularly.
-- If the films previously disappeared after redeployments, verify that the existing volume is still attached to the deployed service. Code updates cannot restore data already erased from ephemeral disk.
+**Alternate Version has been removed** from the add/edit form, category bar and filtering. To preserve older entries without keeping a removed category, the app migrates records previously marked `Alternate Version` to `Workprint` on first startup. Review and recategorise any such films using Edit. This changes only their category; titles, notes, posters, screenshots and download URLs remain intact.
 
-## Features
+## Install / update on GitHub and Railway
 
-Existing SQLite movie records and migrations are preserved. Admin can add/edit/delete films, upload posters and screenshots, enter synopsis, differences, notes, file size/format/resolution/source and Pixeldrain single-file links. Film pages provide an external download link for material you are authorised to share. The website itself does not store video files.
+1. **Back up** your Railway database and uploaded images (`/data/workprints.db` and `/data/uploads/`) before updating.
+2. Extract this ZIP; upload its *contents* into the **root** of your existing GitHub repo. Replace prior `app.py`, `templates`, and `static` files. Older unused header assets can be removed from the repository.
+3. Keep the **same attached Railway volume** and mount it at `/data` (do not remove/recreate the old volume).
+4. Check Railway service variables: `DATA_DIR=/data`, `ADMIN_PASSWORD=<your password>` or `ADMIN_PASSWORD_HASH=<your hash>`, and a persistent long `SECRET_KEY`.
+5. Commit; Railway redeploys the service. Do not upload any database or film files into GitHub.
 
-## Local test
+The app uses `/data` automatically if that directory is present, but **you still must attach a Railway persistent volume and set `DATA_DIR=/data`**. Updates to GitHub should not be allowed to replace your saved content. If a database was previously stored only on an ephemeral filesystem, this update cannot magically recover lost files.
+
+## How archive features work
+
+- The top cards show **published film count, number of occupied categories, screenshot count and number of newly added films in the current year**. They are not hardcoded mockup numbers.
+- Latest additions and Recent Uploads use the existing movies and poster images in the database.
+- Search and format tabs use server-side query filtering. Random entry selects a real published film.
+- Add/edit forms preserve details on differences from the official release, notes, file format, size, resolution, runtime and source information.
+- Pixeldrain supports individual public `https://pixeldrain.com/u/FILE_ID` links; on each film page, the direct download button uses the Pixeldrain file API `?download` endpoint. Limits and availability are managed by Pixeldrain. Only link to files you have the right to distribute.
+- Existing admin login, upload validation, screenshot management, editing and deleting remain in place.
+
+## Run locally
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate       # On Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
-export ADMIN_PASSWORD='choose-a-unique-password'
-export SECRET_KEY='choose-a-long-random-secret'
+export ADMIN_PASSWORD='replace-this-with-your-own-password'
+export SECRET_KEY='replace-this-with-a-long-random-key'
 python app.py
 ```
 
-Then open http://127.0.0.1:8080 . To test the layout without adding real movie records, see `preview-layout.png`, which is a *visual preview*, not the live catalogue.
+Then open `http://127.0.0.1:8080/`. The local instance uses `./data` if `DATA_DIR` isn't specified.
 
-### Header fix (30 October 2026)
-The large mockup-design number and caption have been removed from the actual header image. The header asset has been replaced, and CSS/asset URLs include a cache-busting version so browsers do not continue showing the old image.
+## Testing note
+
+The package's Python was syntax checked, all Jinja templates were compiled, and desktop/mobile visual layouts were rendered in a headless browser using illustrative data. The QA poster artwork was **not** packaged as a real film collection. This environment did not have a usable Flask installation for a complete local backend integration test or a live Railway deployment.

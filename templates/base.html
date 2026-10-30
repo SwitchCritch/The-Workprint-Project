@@ -1,34 +1,28 @@
 <!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070710"><title>{% block title %}The Workprint Project{% endblock %}</title>
-<link rel="stylesheet" href="{{url_for('static', filename='style.css', v='20261030-logo-fix')}}"></head>
-<body class="classic-vhs {% if request.endpoint == 'home' %}home-page{% else %}inner-page{% endif %}">
-<header class="storefront" id="top">
-  <div class="hero-visual">
-    {% if request.endpoint == 'home' %}
-      <a class="hero-logo-link" href="{{url_for('home')}}" aria-label="The Workprint Project home">
-        <img class="hero-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"/>
-        <span class="sr-only">The Workprint Project</span>
-      </a>
-      <img class="mobile-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"/>
-    {% else %}
-      <a class="inner-logo-link" href="{{url_for('home')}}"><img class="inner-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"></a>
-    {% endif %}
-  </div>
-  <nav class="primary-nav" aria-label="Main navigation">
-    <a class="{% if request.endpoint == 'home' %}active{% endif %}" href="{{url_for('home')}}"><span class="nav-symbol">⌂</span> HOME</a>
-    <a href="{{url_for('home')}}#collection"><span class="nav-symbol">▣</span> BROWSE</a>
-    <a href="{{url_for('home')}}#categories"><span class="nav-symbol">▤</span> CATEGORIES</a>
-    <a href="{{url_for('home')}}#collection"><span class="nav-symbol">◷</span> LATEST</a>
-    <a href="{{url_for('home')}}#search-area"><span class="nav-symbol">⌕</span> SEARCH</a>
-    {% if is_admin %}<a href="{{url_for('add')}}"><span class="nav-symbol">＋</span> ADD FILM</a>
-    <form method="post" class="inline" action="{{url_for('logout')}}"><input type="hidden" name="csrf_token" value="{{csrf_token}}"><button class="nav-button">LOG OUT</button></form>
-    {% else %}<a href="{{url_for('login')}}"><span class="nav-symbol">♙</span> ADMIN</a>{% endif %}
-  </nav>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#060c1b">
+<meta name="description" content="The Workprint Project — a curated database of workprints, screeners and rare film formats.">
+<title>{% block title %}The Workprint Project{% endblock %}</title>
+<link rel="icon" href="{{url_for('static',filename='favicon.svg')}}" type="image/svg+xml">
+<link rel="stylesheet" href="{{url_for('static',filename='style.css',v='dashboard-20261030-1')}}">
+</head>
+<body class="dashboard {% if request.endpoint == 'home' %}home-page{% else %}inner-page{% endif %}">
+<header class="site-header" id="top">
+<div class="hero-art" aria-label="The Workprint Project cinema archive"></div>
+<div class="mobile-brand"><a href="{{url_for('home')}}"><img src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"></a></div>
+<nav class="site-nav shell" aria-label="Primary navigation">
+<a class="{% if request.endpoint == 'home' %}active{% endif %}" href="{{url_for('home')}}"><span class="nav-icon">⌂</span> HOME</a>
+<a href="{{url_for('home')}}#latest"><span class="nav-icon">▦</span> BROWSE</a>
+<a href="{{url_for('home')}}#formats"><span class="nav-icon">▱</span> CATEGORIES</a>
+<a href="{{url_for('home')}}#latest"><span class="nav-icon">◷</span> LATEST</a>
+<form class="nav-search" method="get" action="{{url_for('home')}}#latest"><label class="sr-only" for="nav-query">Search the archive</label><span>⌕</span><input id="nav-query" type="search" name="q" placeholder="Search the archive..." value="{{request.args.get('q','')}}"><button type="submit">SEARCH</button></form>
+{% if is_admin %}<a class="nav-login" href="{{url_for('add')}}"><span class="nav-icon">＋</span> ADD FILM</a><form method="post" class="nav-logout" action="{{url_for('logout')}}"><input type="hidden" name="csrf_token" value="{{csrf_token}}"><button class="nav-button" type="submit">LOG OUT</button></form>{% else %}<a class="nav-login" href="{{url_for('login')}}"><span class="nav-icon">♟</span> ADMIN</a>{% endif %}
+</nav>
 </header>
-<main class="archive-scene">
- {% with msgs=get_flashed_messages(with_categories=true) %}{% if msgs %}<div class="container flashes">{% for kind,msg in msgs %}<p class="flash {{kind}}">{{msg}}</p>{% endfor %}</div>{% endif %}{% endwith %}
- {% block body %}{% endblock %}
+<main>
+{% with messages=get_flashed_messages(with_categories=true) %}{% if messages %}<div class="shell flashes">{% for kind,msg in messages %}<div class="flash {{kind}}">{{msg}}</div>{% endfor %}</div>{% endif %}{% endwith %}
+{% block body %}{% endblock %}
 </main>
-<footer><div class="container footer"><b>THE WORKPRINT PROJECT</b><span>REWIND THE HISTORY OF ALTERNATE CINEMA · Only share material you are authorised to distribute.</span></div></footer>
+<footer class="site-footer"><div class="shell footer-inner"><span>© THE WORKPRINT PROJECT</span><span>THE ALTERNATIVE CINEMA ARCHIVE · ONLY SHARE MATERIAL YOU ARE AUTHORISED TO DISTRIBUTE</span><a href="#top">BACK TO TOP ↑</a></div></footer>
 </body></html>
