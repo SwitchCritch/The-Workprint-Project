@@ -1,12 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070710"><title>{% block title %}The Workprint Project{% endblock %}</title>
-<link rel="stylesheet" href="{{url_for('static', filename='style.css', v='20261030-clean')}}"></head>
+<link rel="stylesheet" href="{{url_for('static', filename='style.css', v='20261030-logo-fix')}}"></head>
 <body class="classic-vhs {% if request.endpoint == 'home' %}home-page{% else %}inner-page{% endif %}">
 <header class="storefront" id="top">
   <div class="hero-visual">
     {% if request.endpoint == 'home' %}
-      <a class="hero-logo-hitbox" href="{{url_for('home')}}" aria-label="The Workprint Project home"><span class="sr-only">The Workprint Project</span></a>
+      <a class="hero-logo-link" href="{{url_for('home')}}" aria-label="The Workprint Project home">
+        <img class="hero-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"/>
+        <span class="sr-only">The Workprint Project</span>
+      </a>
       <img class="mobile-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"/>
     {% else %}
       <a class="inner-logo-link" href="{{url_for('home')}}"><img class="inner-logo" src="{{url_for('static',filename='workprint-logo.png')}}" alt="The Workprint Project"></a>
