@@ -83,3 +83,14 @@ The former four-number statistics panel has been removed. The homepage `/` is no
 **Donation** goes to `/donate`. To enable donations, create a hosted payment/donation page with a provider of your choice and set the Railway service variable `DONATION_URL` to its full `https://` URL. If not configured, the site shows a friendly “not set up” page. No card data or payments are processed by this site.
 
 **Upgrade**: Back up your mounted `/data` folder, extract the ZIP, replace GitHub repository files and redeploy without changing or deleting the existing Railway volume. Maintain `DATA_DIR=/data`, `ADMIN_PASSWORD` or `ADMIN_PASSWORD_HASH`, and `SECRET_KEY`. Do not put your private database, API keys or passwords into GitHub.
+
+
+## Google Search Console / Sitemap
+
+The sitemap is generated dynamically at **https://theworkprintproject.com/sitemap.xml**. It includes public pages, published film entries, published news articles, and category searches; unpublished drafts are excluded. The site also provides **/robots.txt**. You do not need to upload a static sitemap manually.
+
+If you change domain, set `SITE_URL=https://your-new-domain.com` in Railway (HTTPS, no trailing slash).
+
+To submit it, redeploy your GitHub files, open the sitemap URL in a browser, then in Google Search Console → Sitemaps enter `sitemap.xml` and select Submit. Search engines can take time to index pages.
+
+**Note:** This update does not alter the database schema or delete saved films, screenshots, articles, or messages. Keep your existing Railway volume and `DATA_DIR=/data`.

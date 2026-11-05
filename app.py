@@ -6,7 +6,8 @@ from datetime import datetime, timezone, timedelta
 from functools import wraps
 from pathlib import Path
 from urllib.parse import urlparse
-from flask import Flask, abort, flash, redirect, render_template, request, send_from_directory, session, url_for
+from xml.etree import ElementTree as ET
+from flask import Flask, Response, abort, flash, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from markupsafe import Markup, escape
@@ -172,6 +173,57 @@ def fetch_movie(mid, include_unpublished=False):
     if not movie or (not movie['published'] and not include_unpublished):
         abort(404)
     return movie
+
+
+# Public, dynamically maintained search-engine sitemap. No unpublished content is listed.
+# SITE_URL may be overridden in Railway if the canonical domain changes.
+SITE_URL = os.getenv('SITE_URL', 'https://theworkprintproject.com').rstrip('/')
+if not SITE_URL.startswith('https://'):
+    SITE_URL = 'https://theworkprintproject.com'
+
+
+@app.get('/sitemap.xml')
+def sitemap():
+    namespace = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+    ET.register_namespace('', namespace)
+    root = ET.Element(f'{{{namespace}}}urlset')
+
+    def include(path, modified=None):
+        item = ET.SubElement(root, f'{{{namespace}}}url')
+        ET.SubElement(item, f'{{{namespace}}}loc').text = SITE_URL + path
+        if modified:
+            # Existing app writes timestamps as ISO strings; sitemap uses YYYY-MM-DD.
+            date = str(modified)[:10]
+            if re.fullmatch(r'\d{4}-\d{2}-\d{2}', date):
+                ET.SubElement(item, f'{{{namespace}}}lastmod').text = date
+
+    include(url_for('home'))
+    include(url_for('browse'))
+    include(url_for('category_index'))
+    include(url_for('contact'))
+    include(url_for('donate'))
+    for category in CATEGORIES:
+        from urllib.parse import urlencode
+        include(url_for('browse') + '?' + urlencode({'category': category}))
+    with db() as con:
+        movies = con.execute('SELECT id, updated_at FROM movies WHERE published=1 ORDER BY id').fetchall()
+        articles = con.execute('SELECT id, updated_at FROM articles WHERE published=1 ORDER BY id').fetchall()
+    for movie in movies:
+        include(url_for('detail', mid=movie['id']), movie['updated_at'])
+    for article in articles:
+        include(url_for('article_detail', aid=article['id']), article['updated_at'])
+    xml = ET.tostring(root, encoding='utf-8', xml_declaration=True)
+    return Response(xml, mimetype='application/xml', headers={'Cache-Control': 'public, max-age=900'})
+
+
+@app.get('/robots.txt')
+def robots_txt():
+    text = ('User-agent: *\n'
+            'Disallow: /admin/\n'
+            'Disallow: /login\n'
+            'Disallow: /logout\n'
+            f'Sitemap: {SITE_URL}/sitemap.xml\n')
+    return Response(text, mimetype='text/plain')
 
 
 @app.get('/health')
