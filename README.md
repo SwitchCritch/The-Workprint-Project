@@ -1,12 +1,12 @@
 # THE WORKPRINT PROJECT — Modern Database Dashboard
 
-A functional Flask + SQLite film archive redesigned to match the **Modern Database Dashboard** reference selected on 30 October 2026.
+A Flask + SQLite film archive with a news-first homepage, searchable sortable library, format categories, contact inbox and optional donations.
 
 ## What is in this GitHub ZIP?
 
 - `app.py` — Flask backend, database, admin login and persistent file uploads
 - `templates/base.html` — centred transparent Workprint Project logo on a plain dark header and working navigation
-- `templates/home.html` — statistics, film filters, dashboard sidebars, real latest additions and search
+- `templates/home.html` — latest articles, coming-soon news and recent film additions
 - `templates/detail.html` — movie metadata, artwork, screenshots, comparisons, external download links
 - `templates/form.html` — add/edit films and screenshots; preserve existing metadata fields
 - `templates/login.html` — password-protected admin sign-in
@@ -34,9 +34,9 @@ The app uses `/data` automatically if that directory is present, but **you still
 
 ## How archive features work
 
-- The top cards show **published film count, number of occupied categories, screenshot count and number of newly added films in the current year**. They are not hardcoded mockup numbers.
+- The old homepage statistics cards have been removed. The homepage now showcases admin-published news stories.
 - Latest additions and Recent Uploads use the existing movies and poster images in the database.
-- Search and format tabs use server-side query filtering. Random entry selects a real published film.
+- Browse, order and format filters use server-side SQL querying. Random entry selects a real published film.
 - Add/edit forms preserve details on differences from the official release, notes, file format, size, resolution, runtime and source information.
 - Pixeldrain supports individual public `https://pixeldrain.com/u/FILE_ID` links; on each film page, the direct download button uses the Pixeldrain file API `?download` endpoint. Limits and availability are managed by Pixeldrain. Only link to files you have the right to distribute.
 - Existing admin login, upload validation, screenshot management, editing and deleting remain in place.
@@ -71,3 +71,15 @@ The illustrated VHS shelves, posters and neon signage in the previous header hav
 - An additive database migration introduces `differences_is_html`, defaulting to 0. Existing film records, screenshots and Pixeldrain links remain untouched.
 - The new `static/rich-editor.js` is local and needs no external editor CDN; the browser requires JavaScript to interact with the formatting buttons.
 - **Keep your existing Railway volume mounted at `/data` and `DATA_DIR=/data`, and back up the volume before deploying.**
+
+## Newsroom, browse, categories, donation, and contact update (5 November 2026)
+
+The former four-number statistics panel has been removed. The homepage `/` is now a news feed. Admins can write rich-text news articles with cover pictures, choose **News** or **Coming Soon**, save drafts, edit and delete at `/admin/news/new` and the article edit screen. News and visitor messages are saved in the same persistent SQLite database under `/data`, with additive tables only; existing films, uploads, screenshots, and Pixeldrain links are retained.
+
+**Browse** is now `/browse` and offers search, category and genre filters, movie-year filter and order controls (newest/oldest, A–Z/Z–A, movie year newest/oldest, last updated). The **Categories** page is `/categories`, with clickable format cards for Workprint, CAM, 35mm, Screener, VHS, Betamax, and Laserdisc. Each category links to a prefiltered browse page.
+
+**Contact Us** is `/contact`. Messages save to the private admin inbox at `/admin/messages` rather than being emailed. The contact form validates required fields, uses a CSRF token, a hidden spam field and a per-IP limit. Admins can reply through their own mail software via the sender's email link and mark messages read/delete messages. **Configure backups** for the inbox because it lives in the existing SQLite database.
+
+**Donation** goes to `/donate`. To enable donations, create a hosted payment/donation page with a provider of your choice and set the Railway service variable `DONATION_URL` to its full `https://` URL. If not configured, the site shows a friendly “not set up” page. No card data or payments are processed by this site.
+
+**Upgrade**: Back up your mounted `/data` folder, extract the ZIP, replace GitHub repository files and redeploy without changing or deleting the existing Railway volume. Maintain `DATA_DIR=/data`, `ADMIN_PASSWORD` or `ADMIN_PASSWORD_HASH`, and `SECRET_KEY`. Do not put your private database, API keys or passwords into GitHub.

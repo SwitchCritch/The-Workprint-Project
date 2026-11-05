@@ -1,40 +1,7 @@
-{% extends 'base.html' %}{% block title %}The Workprint Project — Movie Archive{% endblock %}{% block body %}
-<div class="shell dashboard-content">
-<section class="stat-grid" aria-label="Archive summary">
-<div class="stat-card stat-blue"><span class="stat-icon">▦</span><div><strong>{{count|numberfmt}}</strong><span>TOTAL ENTRIES</span><small>Published films in the archive</small></div></div>
-<div class="stat-card stat-green"><span class="stat-icon">▤</span><div><strong>{{active_categories}}</strong><span>ACTIVE CATEGORIES</span><small>Formats represented in the collection</small></div></div>
-<div class="stat-card stat-purple"><span class="stat-icon">▧</span><div><strong>{{screenshots|numberfmt}}</strong><span>SCREENSHOTS</span><small>Still frames and image references</small></div></div>
-<div class="stat-card stat-red"><span class="stat-icon">◉</span><div><strong>{{new_this_year|numberfmt}}</strong><span>ADDITIONS THIS YEAR</span><small>New records added in {{current_year}}</small></div></div>
-</section>
-<section class="format-toolbar" id="formats" aria-label="Browse by format">
-<div class="format-info"><span class="toolbar-symbol">▦</span><div><strong>BROWSE BY FORMAT</strong><small>Explore the archive by source format or version type.</small></div></div>
-<div class="format-buttons"><a class="format-button {% if not category %}selected{% endif %}" href="{{url_for('home')}}#latest">All</a>{% for c in categories %}<a class="format-button {% if category==c %}selected{% endif %}" href="{{url_for('home',category=c)}}#latest">{{c}}</a>{% endfor %}</div>
-</section>
-<div class="dashboard-grid">
-<aside class="dashboard-left">
-<section class="side-panel"><h2><span>ϟ</span> QUICK LINKS</h2><div class="side-links">
-<a href="{{url_for('home')}}#latest"><span>▣</span> Latest additions <b>›</b></a>
-<a href="{{url_for('home')}}#formats"><span>▤</span> Browse categories <b>›</b></a>
-<a href="{{url_for('home')}}#search-area"><span>⌕</span> Search the archive <b>›</b></a>
-<a href="{{url_for('random_movie')}}"><span>⤨</span> Random entry <b>›</b></a>
-{% if is_admin %}<a href="{{url_for('add')}}"><span>＋</span> Add new film <b>›</b></a>{% endif %}
-</div></section>
-<section class="side-panel"><h2><span>▥</span> ARCHIVE STATS</h2><div class="archive-stats">
-<div><span>Total entries</span><strong>{{count|numberfmt}}</strong></div>
-{% for cat in category_counts %}<div><span>{{cat.category}}</span><strong>{{cat.total|numberfmt}}</strong></div>{% endfor %}
-</div></section>
-</aside>
-<section class="main-library" id="latest"><div class="section-heading"><div><span class="section-icon">★</span><h1>{% if category %}{{category|upper}}{% elif q or year or genre %}SEARCH RESULTS{% else %}LATEST ADDITIONS{% endif %}</h1><p>The newest entries in the archive</p></div><a href="#search-area">VIEW ALL →</a></div>
-{% if movies %}<div class="movie-grid">
-{% for m in movies %}<a class="movie-card" href="{{url_for('detail',mid=m.id)}}">
-<div class="poster-wrap">{% if m.poster %}<img loading="lazy" src="{{url_for('uploads',name=m.poster)}}" alt="Poster for {{m.title}}">{% else %}<div class="poster-placeholder"><span>◉</span><small>THE WORKPRINT PROJECT</small><strong>{{m.title}}</strong></div>{% endif %}<span class="movie-type type-{{m.category|lower|replace(' ','-')}}">{{m.category|upper}}</span></div>
-<div class="movie-info"><h3>{{m.title}}</h3><span class="movie-year">{{m.release_year or 'Year unknown'}}</span>{% if m.synopsis %}<p>{{m.synopsis|truncate(92,True)}}</p>{% endif %}<div class="card-meta"><span>▣ {{m.file_format or m.category}}</span>{% if not m.published %}<span class="draft-label">DRAFT</span>{% elif m.file_size %}<span>{{m.file_size}}</span>{% endif %}</div></div></a>{% endfor %}</div>
-{% else %}<div class="empty"><strong>NO MATCHING FILMS</strong><p>{% if category or q or year or genre %}Try a different filter or clear your search.{% else %}Your archive is ready for its first film. Add a movie from the admin area.{% endif %}</p>{% if is_admin %}<a class="button primary" href="{{url_for('add')}}">+ ADD YOUR FIRST FILM</a>{% endif %}</div>{% endif %}
-<div class="search-section" id="search-area"><h2>⌕ SEARCH THE ARCHIVE</h2><form action="{{url_for('home')}}#latest" method="get" class="filters"><input name="q" type="search" placeholder="Movie title or description..." value="{{q}}" aria-label="Movie title or description"><select name="category" aria-label="Category"><option value="">All categories</option>{% for c in categories %}<option value="{{c}}" {% if category==c %}selected{% endif %}>{{c}}</option>{% endfor %}</select><select name="genre" aria-label="Genre"><option value="">All genres</option>{% for g in genres %}<option value="{{g}}" {% if genre==g %}selected{% endif %}>{{g}}</option>{% endfor %}</select><input name="year" type="number" min="1880" max="2200" placeholder="Year" value="{{year}}" aria-label="Release year"><button class="button primary">SEARCH →</button></form></div>
-</section>
-<aside class="dashboard-right"><section class="side-panel uploads-panel"><h2><span>☁</span> RECENT UPLOADS</h2>
-{% if recent %}{% for m in recent %}<a class="recent-item" href="{{url_for('detail',mid=m.id)}}"><div class="recent-thumb">{% if m.poster %}<img src="{{url_for('uploads',name=m.poster)}}" alt="">{% else %}<span>▣</span>{% endif %}</div><div class="recent-copy"><strong>{{m.title}}</strong><span class="mini-tag">{{m.category}}</span><small>{{m.created_at[:10]}}</small></div><span class="recent-chevron">›</span></a>{% endfor %}{% else %}<p class="empty-recent">Recent entries will appear here when films are added.</p>{% endif %}
-</section><div class="mini-info"><span>◉ ARCHIVE STATUS</span><strong>ONLINE</strong><small>Independent film version database</small></div></aside>
-</div>
-</div>
-{% endblock %}
+{% extends 'base.html' %}{% block title %}Latest News — The Workprint Project{% endblock %}{% block body %}
+<div class="shell news-hub">
+<div class="page-intro"><div><span class="eyebrow">THE WORKPRINT PROJECT / NEWSROOM</span><h1>NEWS &amp; UPDATES</h1><p>New additions, upcoming releases and updates from the archive.</p></div>{% if is_admin %}<a class="button primary" href="{{url_for('article_add')}}">+ WRITE ARTICLE</a>{% endif %}</div>
+{% if articles %}<section class="news-layout"><div class="news-stack">{% for a in articles %}<article class="news-card {% if loop.first %}lead-news{% endif %}"><a href="{{url_for('article_detail',aid=a.id)}}" class="news-art">{% if a.cover %}<img src="{{url_for('uploads',name=a.cover)}}" alt="">{% else %}<div class="news-art-placeholder">▣ <span>THE WORKPRINT PROJECT</span></div>{% endif %}</a><div class="news-copy"><div class="article-meta"><span class="news-tag {% if a.status=='coming_soon' %}upcoming{% endif %}">{{'COMING SOON' if a.status=='coming_soon' else 'ARCHIVE NEWS'}}</span><time>{{a.created_at[:10]}}</time>{% if not a.published %}<span class="news-tag upcoming">DRAFT</span>{% endif %}</div><h2><a href="{{url_for('article_detail',aid=a.id)}}">{{a.title}}</a></h2><p>{{a.excerpt or (a.body|striptags|truncate(200))}}</p><a href="{{url_for('article_detail',aid=a.id)}}" class="read-more">READ ARTICLE →</a></div></article>{% endfor %}</div><aside class="news-sidebar"><div class="side-panel"><h2>THE ARCHIVE</h2><p>Explore rare prints, early cuts and unique versions of cinema history.</p><a class="button primary full" href="{{url_for('browse')}}">BROWSE ALL FILMS →</a></div><div class="side-panel"><h2>EXPLORE BY FORMAT</h2><div class="news-format-links">{% for cat in categories_nav %}<a href="{{url_for('browse',category=cat)}}">{{cat}} <span>→</span></a>{% endfor %}</div></div><div class="side-panel"><h2>SUPPORT THE PROJECT</h2><p>Help keep the archive online and accessible.</p><a class="button" href="{{url_for('donate')}}">♡ DONATE</a></div></aside></section>
+{% else %}<section class="empty-news"><span class="empty-news-icon">▣</span><h2>NEWSROOM OPENING SOON</h2><p>News about new films, rare discoveries and upcoming additions will appear here.</p>{% if is_admin %}<a class="button primary" href="{{url_for('article_add')}}">PUBLISH YOUR FIRST ARTICLE</a>{% endif %}</section>{% endif %}
+{% if recent %}<section class="recent-films"><div class="section-heading"><h2>RECENT FILMS</h2><a href="{{url_for('browse')}}">VIEW COLLECTION →</a></div><div class="recent-news-grid">{% for m in recent %}<a class="recent-news-card" href="{{url_for('detail',mid=m.id)}}">{% if m.poster %}<img src="{{url_for('uploads',name=m.poster)}}" alt="">{% else %}<div class="mini-placeholder">▣</div>{% endif %}<strong>{{m.title}}</strong><span>{{m.category}}</span></a>{% endfor %}</div></section>{% endif %}
+</div>{% endblock %}

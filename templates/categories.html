@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block title %}Categories — The Workprint Project{% endblock %}{% block body %}
+<div class="shell format-page"><div class="page-intro"><div><span class="eyebrow">FILM FORMATS / CATEGORIES</span><h1>EXPLORE BY FORMAT</h1><p>Choose a format to see only films in that collection.</p></div></div>
+{% set icons={'Workprint':'🎞','CAM':'📹','35mm':'🎥','Screener':'📺','VHS':'📼','Betamax':'▣','Laserdisc':'💿'} %}
+<div class="format-card-grid">{% for c in categories %}<a class="format-card" href="{{url_for('browse',category=c)}}"><div class="format-icon" aria-hidden="true">{{icons[c]}}</div><div><h2>{{c}}</h2><p>{{counts.get(c,0)}} {{'film' if counts.get(c,0)==1 else 'films'}}</p></div><span class="format-arrow">↗</span></a>{% endfor %}</div>
+</div>{% endblock %}

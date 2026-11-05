@@ -2,7 +2,7 @@ import os
 import re
 import sqlite3
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 from pathlib import Path
 from urllib.parse import urlparse
@@ -24,6 +24,9 @@ app.secret_key = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 app.config['MAX_CONTENT_LENGTH'] = 12 * 1024 * 1024
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 ADMIN_PASSWORD_HASH = os.getenv('ADMIN_PASSWORD_HASH', '')
+DONATION_URL = os.getenv('DONATION_URL','').strip()
+if DONATION_URL and (urlparse(DONATION_URL).scheme != 'https' or not urlparse(DONATION_URL).hostname):
+    DONATION_URL = ''
 ALLOWED_EXT = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
 CATEGORIES = ('Workprint', 'CAM', '35mm', 'Screener', 'VHS', 'Betamax', 'Laserdisc')
 RICH_TAGS = {'p', 'br', 'div', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a'}
@@ -50,6 +53,21 @@ def init_db():
             audio_details TEXT, download_url TEXT, pixeldrain_url TEXT, poster TEXT,
             published INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS articles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '', body TEXT NOT NULL DEFAULT '',
+            cover TEXT, status TEXT NOT NULL DEFAULT 'published',
+            published INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS contact_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL, email TEXT NOT NULL, subject TEXT NOT NULL,
+            message TEXT NOT NULL, created_at TEXT NOT NULL, read INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS contact_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT NOT NULL, created_at TEXT NOT NULL
         );
         CREATE TABLE IF NOT EXISTS screenshots (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -121,7 +139,7 @@ def csrf():
 
 @app.context_processor
 def common():
-    return {'is_admin': admin_ok(), 'csrf_token': csrf()}
+    return {'is_admin': admin_ok(), 'csrf_token': csrf(), 'donation_url': DONATION_URL, 'categories_nav': CATEGORIES}
 
 
 def validate_csrf():
@@ -163,10 +181,33 @@ def health():
 
 @app.get('/')
 def home():
-    q = request.args.get('q', '').strip()
-    genre = request.args.get('genre', '').strip()
+    with db() as con:
+        condition = '' if admin_ok() else 'WHERE published=1'
+        articles = con.execute(f'SELECT * FROM articles {condition} ORDER BY created_at DESC, id DESC').fetchall()
+        recent = con.execute('SELECT * FROM movies WHERE published=1 ORDER BY created_at DESC, id DESC LIMIT 6').fetchall()
+    return render_template('home.html', articles=articles, recent=recent)
+
+
+SORT_ORDERS = {
+    'newest': 'created_at DESC, id DESC',
+    'oldest': 'created_at ASC, id ASC',
+    'az': 'title COLLATE NOCASE ASC, id DESC',
+    'za': 'title COLLATE NOCASE DESC, id DESC',
+    'year_new': 'release_year IS NULL, release_year DESC, title COLLATE NOCASE ASC',
+    'year_old': 'release_year IS NULL, release_year ASC, title COLLATE NOCASE ASC',
+    'updated': 'updated_at DESC, id DESC',
+}
+
+
+@app.get('/browse')
+def browse():
+    q = request.args.get('q', '').strip()[:120]
+    genre = request.args.get('genre', '').strip()[:90]
     category = request.args.get('category', '').strip()
     year = request.args.get('year', '').strip()
+    order = request.args.get('order', 'newest')
+    if order not in SORT_ORDERS:
+        order = 'newest'
     sql = 'SELECT * FROM movies WHERE 1=1'
     vals = []
     if not admin_ok():
@@ -183,20 +224,156 @@ def home():
     if year.isdigit():
         sql += ' AND release_year=?'
         vals.append(int(year))
-    sql += ' ORDER BY created_at DESC, id DESC'
+    sql += ' ORDER BY ' + SORT_ORDERS[order]
     with db() as con:
         movies = con.execute(sql, vals).fetchall()
-        genres = [x[0] for x in con.execute("SELECT DISTINCT genre FROM movies WHERE genre != '' AND genre IS NOT NULL ORDER BY genre").fetchall()]
-        count = con.execute('SELECT COUNT(*) FROM movies WHERE published=1').fetchone()[0]
-        screenshots = con.execute('''SELECT COUNT(*) FROM screenshots s
-            JOIN movies m ON m.id = s.movie_id WHERE m.published=1''').fetchone()[0]
-        category_counts = con.execute('''SELECT category, COUNT(*) AS total FROM movies
-            WHERE published=1 GROUP BY category ORDER BY total DESC, category''').fetchall()
-        active_categories = len(category_counts)
-        current_year = datetime.now(timezone.utc).year
-        new_this_year = con.execute('SELECT COUNT(*) FROM movies WHERE published=1 AND substr(created_at,1,4)=?', (str(current_year),)).fetchone()[0]
-        recent = con.execute('SELECT * FROM movies WHERE published=1 ORDER BY created_at DESC, id DESC LIMIT 5').fetchall()
-    return render_template('home.html', movies=movies, q=q, genre=genre, category=category, categories=CATEGORIES, year=year, genres=genres, count=count, screenshots=screenshots, category_counts=category_counts, active_categories=active_categories, new_this_year=new_this_year, current_year=current_year, recent=recent)
+        genres = [r[0] for r in con.execute("SELECT DISTINCT genre FROM movies WHERE genre IS NOT NULL AND genre != '' ORDER BY genre").fetchall()]
+    return render_template('browse.html', movies=movies, genres=genres, categories=CATEGORIES,
+                           q=q, genre=genre, category=category, year=year, order=order)
+
+
+@app.get('/categories')
+def category_index():
+    with db() as con:
+        counts = {r['category']:r['total'] for r in con.execute('SELECT category, COUNT(*) AS total FROM movies WHERE published=1 GROUP BY category')}
+    return render_template('categories.html', categories=CATEGORIES, counts=counts)
+
+
+@app.get('/news/<int:aid>')
+def article_detail(aid):
+    with db() as con:
+        article=con.execute('SELECT * FROM articles WHERE id=?',(aid,)).fetchone()
+    if not article or (not article['published'] and not admin_ok()):
+        abort(404)
+    return render_template('article.html', article=article)
+
+
+@app.route('/admin/news/new', methods=['GET','POST'])
+@protected
+def article_add():
+    return article_form(None)
+
+
+@app.route('/admin/news/<int:aid>/edit', methods=['GET','POST'])
+@protected
+def article_edit(aid):
+    with db() as con:
+        article=con.execute('SELECT * FROM articles WHERE id=?',(aid,)).fetchone()
+    if not article:
+        abort(404)
+    return article_form(article)
+
+
+def article_form(article):
+    if request.method == 'POST':
+        validate_csrf()
+        try:
+            title=request.form.get('title','').strip()[:200]
+            excerpt=request.form.get('excerpt','').strip()[:500]
+            body=request.form.get('body','').strip()
+            status=request.form.get('status','published')
+            if not title:
+                raise ValueError('Please enter an article title.')
+            if status not in ('published','coming_soon'):
+                raise ValueError('Invalid article type.')
+            if len(body)>150000:
+                raise ValueError('Article is too long.')
+            body=clean_rich_html(body)
+            published=int(request.form.get('published')=='on')
+            cover=image_save(request.files.get('cover'))
+            now=datetime.now(timezone.utc).isoformat()
+            with db() as con:
+                if article:
+                    if cover:
+                        con.execute('UPDATE articles SET title=?,excerpt=?,body=?,status=?,published=?,cover=?,updated_at=? WHERE id=?',
+                            (title,excerpt,body,status,published,cover,now,article['id']))
+                    else:
+                        con.execute('UPDATE articles SET title=?,excerpt=?,body=?,status=?,published=?,updated_at=? WHERE id=?',
+                            (title,excerpt,body,status,published,now,article['id']))
+                    aid=article['id']
+                else:
+                    aid=con.execute('INSERT INTO articles (title,excerpt,body,status,published,cover,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)',
+                         (title,excerpt,body,status,published,cover,now,now)).lastrowid
+            flash('Article saved successfully.','success')
+            return redirect(url_for('article_detail',aid=aid))
+        except ValueError as exc:
+            flash(str(exc),'error')
+    return render_template('article_form.html',article=article)
+
+
+@app.post('/admin/news/<int:aid>/delete')
+@protected
+def article_delete(aid):
+    validate_csrf()
+    with db() as con:
+        con.execute('DELETE FROM articles WHERE id=?',(aid,))
+    flash('Article deleted.','success')
+    return redirect(url_for('home'))
+
+
+@app.route('/contact', methods=['GET','POST'])
+def contact():
+    if request.method == 'POST':
+        validate_csrf()
+        # Honeypot and server-side rate limiting; no third-party email service required.
+        if request.form.get('website','').strip():
+            flash('Your message was received.','success')
+            return redirect(url_for('contact'))
+        name=request.form.get('name','').strip()[:120]
+        email=request.form.get('email','').strip()[:254]
+        subject=request.form.get('subject','General enquiry').strip()[:140]
+        message=request.form.get('message','').strip()[:5000]
+        if not name or not message or not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+',email):
+            flash('Please enter your name, a valid email, and a message.','error')
+        else:
+            now=datetime.now(timezone.utc)
+            ip=request.remote_addr or 'unknown'
+            with db() as con:
+                recent=con.execute('SELECT COUNT(*) FROM contact_attempts WHERE ip=? AND created_at>?',
+                    (ip,(now-timedelta(hours=1)).isoformat())).fetchone()[0]
+                if recent>=5:
+                    flash('Too many messages. Please try again later.','error')
+                    return render_template('contact.html')
+                con.execute('INSERT INTO contact_attempts (ip,created_at) VALUES (?,?)',(ip,now.isoformat()))
+                con.execute('INSERT INTO contact_messages (name,email,subject,message,created_at) VALUES (?,?,?,?,?)',
+                    (name,email,subject,message,now.isoformat()))
+                con.execute('DELETE FROM contact_attempts WHERE created_at<?',((now-timedelta(days=2)).isoformat(),))
+            flash('Message sent. Thank you for contacting us!','success')
+            return redirect(url_for('contact'))
+    return render_template('contact.html')
+
+
+@app.get('/admin/messages')
+@protected
+def inbox():
+    with db() as con:
+        messages=con.execute('SELECT * FROM contact_messages ORDER BY created_at DESC,id DESC').fetchall()
+    return render_template('inbox.html',messages=messages)
+
+
+@app.post('/admin/messages/<int:mid>/read')
+@protected
+def inbox_read(mid):
+    validate_csrf()
+    with db() as con:
+        con.execute('UPDATE contact_messages SET read=1 WHERE id=?',(mid,))
+    return redirect(url_for('inbox'))
+
+
+@app.post('/admin/messages/<int:mid>/delete')
+@protected
+def inbox_delete(mid):
+    validate_csrf()
+    with db() as con:
+        con.execute('DELETE FROM contact_messages WHERE id=?',(mid,))
+    return redirect(url_for('inbox'))
+
+
+@app.get('/donate')
+def donate():
+    if DONATION_URL:
+        return redirect(DONATION_URL)
+    return render_template('donate.html')
 
 
 @app.template_filter('numberfmt')
@@ -209,7 +386,7 @@ def random_movie():
     with db() as con:
         entry = con.execute('SELECT id FROM movies WHERE published=1 ORDER BY RANDOM() LIMIT 1').fetchone()
     if not entry:
-        return redirect(url_for('home'))
+        return redirect(url_for('browse'))
     return redirect(url_for('detail', mid=entry['id']))
 
 
@@ -366,7 +543,7 @@ def delete(mid):
     for filename in filenames + ([movie['poster']] if movie['poster'] else []):
         (UPLOADS / filename).unlink(missing_ok=True)
     flash('Movie deleted.', 'success')
-    return redirect(url_for('home'))
+    return redirect(url_for('browse'))
 
 
 @app.get('/uploads/<path:name>')
