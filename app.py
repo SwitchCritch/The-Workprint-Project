@@ -3,9 +3,10 @@ import re
 import sqlite3
 import secrets
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from functools import wraps
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 from xml.etree import ElementTree as ET
 from flask import Flask, Response, abort, flash, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -26,6 +27,8 @@ app.config['MAX_CONTENT_LENGTH'] = 12 * 1024 * 1024
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 ADMIN_PASSWORD_HASH = os.getenv('ADMIN_PASSWORD_HASH', '')
 DONATION_URL = os.getenv('DONATION_URL','').strip()
+DEFAULT_DAILY_LIMIT = max(1, min(50, int(os.getenv('DAILY_DOWNLOAD_LIMIT', '3'))))
+LONDON_TZ = ZoneInfo('Europe/London')
 if DONATION_URL and (urlparse(DONATION_URL).scheme != 'https' or not urlparse(DONATION_URL).hostname):
     DONATION_URL = ''
 ALLOWED_EXT = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
@@ -70,6 +73,33 @@ def init_db():
         CREATE TABLE IF NOT EXISTS contact_attempts (
             id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT NOT NULL, created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL COLLATE NOCASE UNIQUE,
+            email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            suspended INTEGER NOT NULL DEFAULT 0,
+            daily_limit INTEGER,
+            last_login_at TEXT
+        );
+        CREATE TABLE IF NOT EXISTS download_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+            movie_id INTEGER REFERENCES movies(id) ON DELETE SET NULL,
+            movie_title TEXT NOT NULL,
+            requested_at TEXT NOT NULL,
+            uk_date TEXT NOT NULL,
+            provider TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_member_request_date ON download_requests(member_id,uk_date);
+        CREATE INDEX IF NOT EXISTS idx_request_history ON download_requests(requested_at);
+        CREATE TABLE IF NOT EXISTS auth_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip TEXT NOT NULL,
+            attempted_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_auth_attempts_ip ON auth_attempts(ip, attempted_at);
         CREATE TABLE IF NOT EXISTS screenshots (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             movie_id INTEGER NOT NULL REFERENCES movies(id) ON DELETE CASCADE,
@@ -123,6 +153,61 @@ def admin_ok():
     return session.get('admin') is True
 
 
+def current_member():
+    member_id = session.get('member_id')
+    if not isinstance(member_id, int):
+        return None
+    with db() as con:
+        member = con.execute('SELECT * FROM members WHERE id=?', (member_id,)).fetchone()
+    return member if member and not member['suspended'] else None
+
+
+def member_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not current_member():
+            flash('Please sign in to access downloads.', 'error')
+            return redirect(url_for('member_login', next=(url_for('detail', mid=kwargs['mid']) if request.endpoint == 'member_download' and 'mid' in kwargs else request.path)))
+        return fn(*args, **kwargs)
+    return wrapper
+
+
+def uk_today():
+    return datetime.now(LONDON_TZ).date().isoformat()
+
+
+def remaining_downloads(member):
+    if not member:
+        return None
+    with db() as con:
+        count = con.execute('SELECT COUNT(*) FROM download_requests WHERE member_id=? AND uk_date=?',
+                            (member['id'], uk_today())).fetchone()[0]
+    limit = member['daily_limit'] if member['daily_limit'] is not None else DEFAULT_DAILY_LIMIT
+    return max(0, limit - count)
+
+
+def safe_next(target, fallback='home'):
+    # Only allow internal relative paths; prevent open redirects.
+    target = (target or '').strip()
+    parts = urlsplit(target)
+    if target.startswith('/') and not target.startswith('//') and not parts.netloc and not parts.scheme and '\\' not in target:
+        return target
+    return url_for(fallback)
+
+
+def auth_rate_limited():
+    now = datetime.now(timezone.utc)
+    ip = request.remote_addr or 'unknown'
+    with db() as con:
+        con.execute('DELETE FROM auth_attempts WHERE attempted_at<?', ((now-timedelta(days=2)).isoformat(),))
+        count = con.execute('SELECT COUNT(*) FROM auth_attempts WHERE ip=? AND attempted_at>?',
+                            (ip, (now-timedelta(minutes=30)).isoformat())).fetchone()[0]
+        if count >= 12:
+            return True
+        con.execute('INSERT INTO auth_attempts (ip, attempted_at) VALUES (?,?)', (ip, now.isoformat()))
+    return False
+
+
 def protected(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -140,7 +225,7 @@ def csrf():
 
 @app.context_processor
 def common():
-    return {'is_admin': admin_ok(), 'csrf_token': csrf(), 'donation_url': DONATION_URL, 'categories_nav': CATEGORIES}
+    return {'is_admin': admin_ok(), 'member': current_member(), 'csrf_token': csrf(), 'donation_url': DONATION_URL, 'categories_nav': CATEGORIES}
 
 
 def validate_csrf():
@@ -447,7 +532,8 @@ def detail(mid):
     movie = fetch_movie(mid, admin_ok())
     with db() as con:
         pics = con.execute('SELECT * FROM screenshots WHERE movie_id=? ORDER BY id', (mid,)).fetchall()
-    return render_template('detail.html', movie=movie, pics=pics)
+    member = current_member()
+    return render_template('detail.html', movie=movie, pics=pics, remaining=remaining_downloads(member))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -596,6 +682,196 @@ def delete(mid):
         (UPLOADS / filename).unlink(missing_ok=True)
     flash('Movie deleted.', 'success')
     return redirect(url_for('browse'))
+
+
+@app.route('/members/register', methods=['GET', 'POST'])
+def member_register():
+    if current_member():
+        return redirect(url_for('member_account'))
+    if request.method == 'POST':
+        validate_csrf()
+        if auth_rate_limited():
+            flash('Too many sign-in attempts from this connection. Please try again later.', 'error')
+        elif request.form.get('website', '').strip():
+            flash('Unable to create this account.', 'error')
+        else:
+            username = request.form.get('username', '').strip()
+            email = request.form.get('email', '').strip().lower()
+            password = request.form.get('password', '')
+            confirm = request.form.get('confirm', '')
+            if not re.fullmatch(r'[A-Za-z0-9_.-]{3,32}', username):
+                flash('Username must be 3–32 characters (letters, numbers, underscore, dash or dot).', 'error')
+            elif len(email) > 254 or not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', email):
+                flash('Enter a valid email address.', 'error')
+            elif len(password) < 12 or len(password) > 256:
+                flash('Please use a password of at least 12 characters.', 'error')
+            elif password != confirm:
+                flash('Passwords do not match.', 'error')
+            else:
+                try:
+                    with db() as con:
+                        cur = con.execute('INSERT INTO members (username,email,password_hash,created_at) VALUES (?,?,?,?)',
+                                          (username,email,generate_password_hash(password),datetime.now(timezone.utc).isoformat()))
+                    session.clear()
+                    session['member_id'] = cur.lastrowid
+                    session['csrf'] = secrets.token_urlsafe(32)
+                    flash('Welcome! Your member account is ready.', 'success')
+                    return redirect(url_for('member_account'))
+                except sqlite3.IntegrityError:
+                    flash('This username or email is already in use.', 'error')
+    return render_template('member_register.html')
+
+
+@app.route('/members/login', methods=['GET', 'POST'])
+def member_login():
+    if current_member():
+        return redirect(url_for('member_account'))
+    if request.method == 'POST':
+        validate_csrf()
+        if auth_rate_limited():
+            flash('Too many sign-in attempts. Please try again later.', 'error')
+        else:
+            login_id = request.form.get('login', '').strip()[:254]
+            password = request.form.get('password', '')
+            with db() as con:
+                member = con.execute('SELECT * FROM members WHERE username=? OR email=?', (login_id,login_id)).fetchone()
+            if member and not member['suspended'] and check_password_hash(member['password_hash'], password):
+                session.clear()
+                session['member_id'] = member['id']
+                session['csrf'] = secrets.token_urlsafe(32)
+                with db() as con:
+                    con.execute('UPDATE members SET last_login_at=? WHERE id=?', (datetime.now(timezone.utc).isoformat(),member['id']))
+                return redirect(safe_next(request.form.get('next'), 'member_account'))
+            flash('Incorrect credentials or account unavailable.', 'error')
+    return render_template('member_login.html', next_url=safe_next(request.args.get('next'), 'member_account'))
+
+
+@app.post('/members/logout')
+def member_logout():
+    validate_csrf()
+    session.clear()
+    return redirect(url_for('home'))
+
+
+@app.get('/members/account')
+@member_required
+def member_account():
+    member = current_member()
+    with db() as con:
+        history = con.execute('SELECT * FROM download_requests WHERE member_id=? ORDER BY requested_at DESC,id DESC LIMIT 150',
+                              (member['id'],)).fetchall()
+        today = con.execute('SELECT COUNT(*) FROM download_requests WHERE member_id=? AND uk_date=?', (member['id'],uk_today())).fetchone()[0]
+    limit = member['daily_limit'] if member['daily_limit'] is not None else DEFAULT_DAILY_LIMIT
+    return render_template('member_account.html', history=history, today=today, limit=limit)
+
+
+@app.post('/workprint/<int:mid>/download')
+@member_required
+def member_download(mid):
+    validate_csrf()
+    movie = fetch_movie(mid, False)
+    direct = pixeldrain_direct(movie['pixeldrain_url']) if movie['pixeldrain_url'] else ''
+    external = movie['download_url'] or ''
+    if direct:
+        link, provider = direct, 'Pixeldrain'
+    elif external:
+        parsed = urlparse(external)
+        if parsed.scheme not in ('https', 'http') or not parsed.hostname or parsed.username or parsed.password:
+            abort(400)
+        link, provider = external, 'External'
+    else:
+        abort(404)
+    member = current_member()
+    if not member:
+        return redirect(url_for('member_login',next=request.path))
+    uk_date = uk_today()
+    limit = member['daily_limit'] if member['daily_limit'] is not None else DEFAULT_DAILY_LIMIT
+    con = db()
+    try:
+        # BEGIN IMMEDIATE serializes concurrent requests, preventing quota bypasses.
+        con.execute('BEGIN IMMEDIATE')
+        fresh = con.execute('SELECT suspended,daily_limit FROM members WHERE id=?',(member['id'],)).fetchone()
+        if not fresh or fresh['suspended']:
+            con.rollback()
+            abort(403)
+        limit = fresh['daily_limit'] if fresh['daily_limit'] is not None else DEFAULT_DAILY_LIMIT
+        count = con.execute('SELECT COUNT(*) FROM download_requests WHERE member_id=? AND uk_date=?',
+                            (member['id'],uk_date)).fetchone()[0]
+        if count >= limit:
+            con.rollback()
+            flash('You have used all your download requests for today. Your allowance resets at midnight UK time.', 'error')
+            return redirect(url_for('detail',mid=mid))
+        con.execute('INSERT INTO download_requests (member_id,movie_id,movie_title,requested_at,uk_date,provider) VALUES (?,?,?,?,?,?)',
+                    (member['id'],mid,movie['title'],datetime.now(timezone.utc).isoformat(),uk_date,provider))
+        con.commit()
+    finally:
+        con.close()
+    # Redirect to a third-party URL; this records link requests, not actual download completions.
+    response = redirect(link, code=303)
+    response.headers['Referrer-Policy'] = 'no-referrer'
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@app.get('/admin/members')
+@protected
+def admin_members():
+    q=request.args.get('q','').strip()[:120]
+    with db() as con:
+        if q:
+            members=con.execute("""SELECT m.*, (SELECT COUNT(*) FROM download_requests r WHERE r.member_id=m.id AND r.uk_date=?) AS today_count,
+                (SELECT COUNT(*) FROM download_requests r WHERE r.member_id=m.id) AS total_count
+                FROM members m WHERE m.username LIKE ? OR m.email LIKE ? ORDER BY m.created_at DESC""",
+                (uk_today(),f'%{q}%',f'%{q}%')).fetchall()
+        else:
+            members=con.execute("""SELECT m.*, (SELECT COUNT(*) FROM download_requests r WHERE r.member_id=m.id AND r.uk_date=?) AS today_count,
+                (SELECT COUNT(*) FROM download_requests r WHERE r.member_id=m.id) AS total_count
+                FROM members m ORDER BY m.created_at DESC""",(uk_today(),)).fetchall()
+        count=con.execute('SELECT COUNT(*) FROM members').fetchone()[0]
+        today_count=con.execute('SELECT COUNT(*) FROM download_requests WHERE uk_date=?',(uk_today(),)).fetchone()[0]
+        recent=con.execute("""SELECT d.*,m.username FROM download_requests d JOIN members m ON m.id=d.member_id
+                              ORDER BY d.requested_at DESC,d.id DESC LIMIT 50""").fetchall()
+    return render_template('admin_members.html',members=members,q=q,total_members=count,today_count=today_count,recent=recent,default_limit=DEFAULT_DAILY_LIMIT)
+
+
+@app.get('/admin/members/<int:member_id>')
+@protected
+def admin_member_detail(member_id):
+    with db() as con:
+        member=con.execute('SELECT * FROM members WHERE id=?',(member_id,)).fetchone()
+        history=con.execute('SELECT * FROM download_requests WHERE member_id=? ORDER BY requested_at DESC,id DESC LIMIT 500',(member_id,)).fetchall()
+        count=con.execute('SELECT COUNT(*) FROM download_requests WHERE member_id=? AND uk_date=?',(member_id,uk_today())).fetchone()[0]
+    if not member:
+        abort(404)
+    return render_template('admin_member_detail.html',member_record=member,history=history,today_count=count,default_limit=DEFAULT_DAILY_LIMIT)
+
+
+@app.post('/admin/members/<int:member_id>/settings')
+@protected
+def admin_member_settings(member_id):
+    validate_csrf()
+    operation=request.form.get('operation')
+    with db() as con:
+        member=con.execute('SELECT id FROM members WHERE id=?',(member_id,)).fetchone()
+        if not member: abort(404)
+        if operation == 'suspend':
+            con.execute('UPDATE members SET suspended=1 WHERE id=?',(member_id,))
+            flash('Member suspended.', 'success')
+        elif operation == 'reactivate':
+            con.execute('UPDATE members SET suspended=0 WHERE id=?',(member_id,))
+            flash('Member reactivated.', 'success')
+        elif operation == 'limit':
+            value=request.form.get('daily_limit','').strip()
+            if value == 'default':
+                con.execute('UPDATE members SET daily_limit=NULL WHERE id=?',(member_id,))
+            elif value.isdigit() and 1<=int(value)<=50:
+                con.execute('UPDATE members SET daily_limit=? WHERE id=?',(int(value),member_id))
+            else:
+                abort(400,'Invalid limit')
+            flash('Daily limit updated.', 'success')
+        else:
+            abort(400)
+    return redirect(url_for('admin_member_detail',member_id=member_id))
 
 
 @app.get('/uploads/<path:name>')

@@ -94,3 +94,23 @@ If you change domain, set `SITE_URL=https://your-new-domain.com` in Railway (HTT
 To submit it, redeploy your GitHub files, open the sitemap URL in a browser, then in Google Search Console → Sitemaps enter `sitemap.xml` and select Submit. Search engines can take time to index pages.
 
 **Note:** This update does not alter the database schema or delete saved films, screenshots, articles, or messages. Keep your existing Railway volume and `DATA_DIR=/data`.
+
+## Member accounts & download request limits (new)
+
+The public film library remains browsable. Visitors must **register / sign in** to request an external download link. `Members Login`, `Sign Up` and `My Account` appear in the navigation. The admin-only `MEMBERS` navigation item opens **Admin → Members** to search users, see the request log, suspend/reactivate accounts and override individual quotas.
+
+### Railway settings
+
+- Keep the **existing persistent volume mounted at `/data`** and `DATA_DIR=/data`. All movie records, screenshots, news, members and request logs share the same `workprints.db` file. **Back up your live `/data/workprints.db` and `/data/uploads` before deploying**. The upgrade creates two new tables and indexes without dropping existing content.
+- Set a **strong, permanent `SECRET_KEY`** and keep your existing `ADMIN_PASSWORD` or `ADMIN_PASSWORD_HASH`.
+- Optional: `DAILY_DOWNLOAD_LIMIT=3` (integer 1–50). The default is three download-link requests per account per calendar day in the `Europe/London` time zone. Changing this setting requires a redeploy; individual limits are editable in Admin → Members.
+- You **must have working HTTPS with a valid certificate before accepting registrations**. Fix Chrome's **Not secure** warning before making the site public.
+
+### Download link behaviour and limits
+
+- A signed-in member clicks **REQUEST DOWNLOAD** on a published film. A CSRF-protected POST transaction checks the account's suspended status and its remaining daily quota, records the film title and timestamp, and redirects to the configured Pixeldrain URL (or fallback external link).
+- Admin sees **download requests**, not proof of completed file transfers. If a user clicks again, it counts again. Records are stored in the persistent SQLite database and are not wiped at midnight; only the quota counter starts afresh on the next UK calendar day.
+- The new site no longer renders direct Pixeldrain links to anonymous users. **It cannot revoke or block reuse of a Pixeldrain URL once someone obtains it**, nor can it control downloads outside the site. For strict file-level limits, you would need a private storage service with expiring signed links and server-side file delivery.
+- Registration uses hashed passwords and simple IP-based sign-in throttling. **Email verification, automatic password reset email, CAPTCHA, and email notifications are not yet included**, since they need an email/CAPTCHA service and suitable configuration. Users can contact you to request account help. Consider adding these before broad public promotion.
+- This website handles member data (email addresses and download request history). Publish an appropriate privacy notice and provide a way to request data access/deletion before public sign-ups; collect only data you need.
+- Only share downloadable content you are authorised to distribute.

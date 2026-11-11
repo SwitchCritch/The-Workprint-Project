@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}Register | The Workprint Project{% endblock %}{% block body %}
+<section class="shell member-panel"><div class="member-box"><div class="eyebrow">THE WORKPRINT PROJECT / MEMBERS</div><h1>Create an account</h1><p class="muted">Create a free account to request downloads. {{3}} per day by default; resets at midnight UK time.</p>
+<form method="post" class="member-form"><input type="hidden" name="csrf_token" value="{{csrf_token}}"><div class="trap" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+<label for="username">Username</label><input id="username" name="username" required minlength="3" maxlength="32" autocomplete="username" pattern="[A-Za-z0-9_.-]{3,32}" placeholder="Choose a username">
+<label for="email">Email address</label><input id="email" type="email" name="email" maxlength="254" required autocomplete="email">
+<label for="password">Password (at least 12 characters)</label><input id="password" name="password" type="password" minlength="12" required autocomplete="new-password">
+<label for="confirm">Confirm password</label><input id="confirm" name="confirm" type="password" minlength="12" required autocomplete="new-password">
+<button class="button primary full" type="submit">CREATE ACCOUNT</button></form><p class="tiny">Don't reuse a password from another website. We store a secure password hash rather than your password. Email verification and password-reset emails are not configured in this version.</p><a href="{{url_for('member_login')}}">Already registered? Sign in →</a></div></section>
+{% endblock %}
