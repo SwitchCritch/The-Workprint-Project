@@ -114,3 +114,10 @@ The public film library remains browsable. Visitors must **register / sign in** 
 - Registration uses hashed passwords and simple IP-based sign-in throttling. **Email verification, automatic password reset email, CAPTCHA, and email notifications are not yet included**, since they need an email/CAPTCHA service and suitable configuration. Users can contact you to request account help. Consider adding these before broad public promotion.
 - This website handles member data (email addresses and download request history). Publish an appropriate privacy notice and provide a way to request data access/deletion before public sign-ups; collect only data you need.
 - Only share downloadable content you are authorised to distribute.
+
+
+## New: YouTube embeds inside news articles
+
+In Admin → News → Add/Edit, click the desired location in **Article content** and use **▶ Insert YouTube Video**. Paste a standard YouTube watch, share, Shorts, Live, or embed URL. The editor inserts a movable video placeholder at that point in the article; you may type above/below it, or click the placeholder to replace/remove it. Save the article and a responsive privacy-enhanced YouTube iframe will play **in that position** on the public article page. YouTube may display ads or block embeds for videos whose owners disallow embedding. No new database columns or environment variables are needed.
+
+For safety, raw custom iframe HTML is not accepted. Only valid 11-character YouTube video IDs produce an iframe. The public embed loads content from youtube-nocookie.com. The article editor preserves existing article HTML.

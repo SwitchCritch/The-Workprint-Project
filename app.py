@@ -33,8 +33,8 @@ if DONATION_URL and (urlparse(DONATION_URL).scheme != 'https' or not urlparse(DO
     DONATION_URL = ''
 ALLOWED_EXT = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
 CATEGORIES = ('Workprint', 'CAM', '35mm', 'Screener', 'VHS', 'Betamax', 'Laserdisc')
-RICH_TAGS = {'p', 'br', 'div', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a'}
-RICH_ATTRIBUTES = {'a': ['href', 'title']}
+RICH_TAGS = {'p', 'br', 'div', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a', 'span'}
+RICH_ATTRIBUTES = {'a': ['href', 'title'], 'span': ['data-youtube-id', 'class']}
 
 
 
@@ -121,8 +121,23 @@ def init_db():
 init_db()
 
 
+YOUTUBE_MARKER_RE = re.compile(r'<span\b(?=[^>]*\bdata-youtube-id="([A-Za-z0-9_-]{11})")(?=[^>]*\bclass="youtube-embed")[^>]*>.*?</span>', re.I | re.S)
+
+
+def youtube_markup(match):
+    """Only generated IDs are accepted; never allow an arbitrary iframe URL."""
+    video_id = match.group(1)
+    return (f'<div class="article-video"><iframe '
+            f'src="https://www.youtube-nocookie.com/embed/{video_id}" '
+            'title="YouTube video player" loading="lazy" '
+            'referrerpolicy="strict-origin-when-cross-origin" '
+            'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
+            'allowfullscreen></iframe></div>')
+
+
 def clean_rich_html(value):
-    """Sanitise author-entered markup, leaving only basic document formatting."""
+    """Sanitise HTML. Permit only known video placeholders, never arbitrary iframes."""
+    # Reject malformed video markup while retaining regular HTML formatting.
     return bleach.clean(value or '', tags=RICH_TAGS, attributes=RICH_ATTRIBUTES,
                         protocols={'https', 'http', 'mailto'}, strip=True)
 
@@ -132,7 +147,8 @@ def rich_differences(value, is_html=0):
     if not value:
         return Markup('')
     if is_html:
-        return Markup(clean_rich_html(value))
+        cleaned = clean_rich_html(value)
+        return Markup(YOUTUBE_MARKER_RE.sub(youtube_markup, cleaned))
     # Preserve old plain-text descriptions exactly; do not interpret them as HTML.
     paragraphs = value.replace('\r\n', '\n').replace('\r', '\n').split('\n\n')
     return Markup(''.join('<p>' + '<br>'.join(str(escape(part)) for part in para.split('\n')) + '</p>' for para in paragraphs))
