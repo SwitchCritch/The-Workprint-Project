@@ -1268,9 +1268,11 @@ def preview_contact():
 @app.get("/catalogue-preview/donate")
 def preview_donate():
     env=request.environ.get("workers.env")
-    link=getattr(env,"DONATION_URL","") if env else ""
-    if not isinstance(link,str):
-        link=""
+    # The verified public Ko-fi address is also a deployment fallback.
+    # A configured nonempty URL takes precedence and is validated below.
+    link=getattr(env,"DONATION_URL",None) if env is not None else None
+    if not isinstance(link,str) or not link.strip():
+        link="https://ko-fi.com/switchcritch"
     link=link.strip()
     try:
         parsed=urlsplit(link)
