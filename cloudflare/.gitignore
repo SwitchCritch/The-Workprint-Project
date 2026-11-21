@@ -1,0 +1,14 @@
+# Never commit extracted archive data, member records, credentials, or backups.
+cloudflare-export*.sql
+*.db
+*.db-shm
+*.db-wal
+*.sqlite*
+data/
+uploads/
+.env
+.dev.vars
+.venv/
+.wrangler/
+__pycache__/
+*.pyc
