@@ -3,21 +3,25 @@
   "name": "the-workprint-project-preview",
   "main": "src/worker.py",
   "compatibility_date": "2026-11-21",
-  "compatibility_flags": ["python_workers"],
+  "compatibility_flags": [
+    "python_workers"
+  ],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
     "run_worker_first": true
-  }
-  // Uncomment and update these ONLY after creating a separate preview database
-  // and R2 bucket in Cloudflare. Do not use production bindings here.
-  // ,"d1_databases": [{
-  //   "binding": "DB",
-  //   "database_name": "workprint-preview",
-  //   "database_id": "REPLACE_WITH_REAL_D1_DATABASE_ID"
-  // }]
-  // ,"r2_buckets": [{
-  //   "binding": "UPLOADS",
-  //   "bucket_name": "workprint-preview-uploads"
-  // }]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "workprint-preview",
+      "database_id": "9fad8f35-2921-45ad-b1a7-c851365773cf"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "UPLOADS",
+      "bucket_name": "workprint-preview-uploads"
+    }
+  ]
 }
