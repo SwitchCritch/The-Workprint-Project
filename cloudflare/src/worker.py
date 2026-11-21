@@ -16,6 +16,29 @@ def health():
     return {"status": "ok", "mode": "migration-preview", "writes_enabled": False}
 
 
+@app.get("/health/storage")
+def storage_health():
+    # Read-only smoke test: no member data, object keys or exception details
+    # are returned. No writes, migrations or public bucket access are needed.
+    checks = {"database": "unavailable", "image_storage": "unavailable"}
+    env = request.environ["workers.env"]
+    try:
+        result = run_sync(env.DB.prepare("SELECT 1 AS ok").first("ok"))
+        if result == 1:
+            checks["database"] = "connected"
+    except Exception:
+        pass
+    try:
+        # A missing object is expected and is still a successful R2 request.
+        run_sync(env.UPLOADS.head("__workprint_preview_healthcheck__"))
+        checks["image_storage"] = "connected"
+    except Exception:
+        pass
+    healthy = all(value == "connected" for value in checks.values())
+    return {"status": "ok" if healthy else "connection_check_failed",
+            **checks, "writes_enabled": False}, 200 if healthy else 503
+
+
 @app.route("/", defaults={"path": ""}, methods=["GET", "HEAD"])
 @app.route("/<path:path>", methods=["GET", "HEAD"])
 def static_preview(path):
