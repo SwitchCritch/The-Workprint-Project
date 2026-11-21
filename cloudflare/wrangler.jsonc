@@ -23,5 +23,12 @@
       "binding": "UPLOADS",
       "bucket_name": "workprint-preview-uploads"
     }
-  ]
+  ],
+  "services": [
+    {
+      "binding": "AUTH_COMPAT",
+      "service": "workprint-auth-compat-test"
+    }
+  ],
+  "keep_vars": true
 }
