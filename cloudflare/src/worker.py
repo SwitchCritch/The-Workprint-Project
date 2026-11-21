@@ -1694,12 +1694,19 @@ def approved_external_init():
 
 
 def approved_pixeldrain_link(value):
-    # Accept a normal single-file share page only. No lists, API keys,
-    # arbitrary hosts, fragments, redirects supplied by users or extra query data.
-    if not isinstance(value,str) or len(value)>150:
+    # Accept approved Pixeldrain share links.
+    if not isinstance(value, str) or len(value) > 150:
         return ""
-    match=re.fullmatch(r"https://pixeldrain\.com/u/([A-Za-z0-9]{8})/?",value.strip())
-    return "https://pixeldrain.com/u/"+match.group(1) if match else ""
+
+    match = re.fullmatch(
+        r"https://pixeldrain\.com/(u|d)/([A-Za-z0-9]{8})/?",
+        value.strip()
+    )
+
+    if not match:
+        return ""
+
+    return f"https://pixeldrain.com/{match.group(1)}/{match.group(2)}"
 
 
 def approved_external_available(mid):
