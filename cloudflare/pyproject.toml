@@ -1,0 +1,9 @@
+[project]
+name = "workprint-cloudflare-preview"
+version = "0.1.0"
+description = "Read-only Cloudflare proof of concept for The Workprint Project"
+requires-python = ">=3.12"
+dependencies = ["flask>=3.0,<4"]
+
+[dependency-groups]
+dev = ["workers-py", "workers-runtime-sdk"]
