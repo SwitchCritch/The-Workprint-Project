@@ -210,7 +210,18 @@ def uploads(name):
         abort(404)
     ext = name.rsplit(".",1)[-1].lower()
     mime = {"jpg":"image/jpeg","jpeg":"image/jpeg","png":"image/png","gif":"image/gif","webp":"image/webp"}[ext]
-    payload = run_sync(obj.arrayBuffer()).to_py().tobytes()
+    # Python Workers may expose R2 data directly as bytes, or as a JS
+    # buffer depending on the runtime binding implementation.
+    if hasattr(obj, "arrayBuffer"):
+        raw = run_sync(obj.arrayBuffer())
+    elif hasattr(obj, "array_buffer"):
+        raw = run_sync(obj.array_buffer())
+    else:
+        from js import Response as JSResponse
+        raw = run_sync(JSResponse.new(obj.body).arrayBuffer())
+    if hasattr(raw, "to_py"):
+        raw = raw.to_py()
+    payload = raw.tobytes() if hasattr(raw, "tobytes") else bytes(raw)
     return Response(payload, mimetype=mime, headers={"X-Content-Type-Options":"nosniff"})
 
 
