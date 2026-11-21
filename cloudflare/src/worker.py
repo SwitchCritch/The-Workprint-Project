@@ -84,7 +84,13 @@ def rows(sql, args=()):
     stmt = request.environ["workers.env"].DB.prepare(sql)
     if args:
         stmt = stmt.bind(*args)
-    return run_sync(stmt.all()).results.to_py()
+    result = run_sync(stmt.all())
+    records = result.results
+    # Current Python Workers expose D1 results as native Python lists.
+    # Retain support for older JS proxy results without converting twice.
+    if hasattr(records, "to_py"):
+        records = records.to_py()
+    return [row.to_py() if hasattr(row, "to_py") else row for row in records]
 
 
 def ready():
