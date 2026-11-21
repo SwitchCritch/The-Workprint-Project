@@ -928,6 +928,18 @@ def preview_member_check():
             result = "passed" if check_password_hash(fixture,"workprint-public-test") else "failed"
         except Exception:
             result = "unavailable in this runtime"
+        # Fixed dummy vector only; no real password or member hash leaves this Worker.
+        try:
+            from js import Request as JSRequest
+            helper = getattr(request.environ["workers.env"], "AUTH_COMPAT", None)
+            if helper is not None:
+                response = run_sync(helper.fetch(JSRequest.new("https://internal/self-test")))
+                data = run_sync(response.json())
+                if hasattr(data, "to_py"):
+                    data = data.to_py()
+                result = "passed" if response.status == 200 and data["passed"] is True else "private helper test failed"
+        except Exception:
+            result = "private helper unavailable or exceeded runtime limits"
     return render_catalogue("preview_member_check.html",True,formats=formats,result=result,csrf_token=film_action_token(sid))
 
 
