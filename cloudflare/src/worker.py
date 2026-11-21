@@ -23,7 +23,7 @@ def static_preview(path):
     if path not in ("", "index.html", "style.css"):
         return {"error": "The full archive is not yet migrated."}, 404
     assets = request.environ["workers.env"].ASSETS
-    asset_response = run_sync(assets.fetch(f"https://assets.local/{path or 'index.html'}"))
+    asset_response = run_sync(assets.fetch(f"https://assets.local/{'' if path == 'index.html' else path}"))
     body = run_sync(asset_response.bytes())
     return Response(body, status=asset_response.status, headers=asset_response.headers)
 
