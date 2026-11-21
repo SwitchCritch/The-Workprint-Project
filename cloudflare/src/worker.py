@@ -42,8 +42,11 @@ def storage_health():
 @app.route("/", defaults={"path": ""}, methods=["GET", "HEAD"])
 @app.route("/<path:path>", methods=["GET", "HEAD"])
 def static_preview(path):
-    # For now, do not expose login, downloads, admin, or user-data endpoints.
-    if path not in ("", "index.html", "style.css", "workprint-logo.png", "favicon.svg"):
+    # The preview root now opens the migrated news page. Keep existing
+    # static asset paths available while rejecting unknown paths.
+    if path in ("", "index.html"):
+        return redirect(url_for("home"), code=302)
+    if path not in ("style.css", "workprint-logo.png", "favicon.svg"):
         return {"error": "The full archive is not yet migrated."}, 404
     assets = request.environ["workers.env"].ASSETS
     asset_response = run_sync(assets.fetch(f"https://assets.local/{'' if path == 'index.html' else path}"))
@@ -235,6 +238,9 @@ def serve_image_object(name):
 def prevent_indexing(response):
     response.headers["X-Robots-Tag"] = "noindex, nofollow"
     response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
 
 
@@ -1362,6 +1368,71 @@ def preview_delete_draft(kind,rid):
     if len(changed)!=1:
         return page("Deletion blocked: the record changed or has protected request history.",409)
     return redirect(url_for("preview_film_manager" if kind=="film" else "preview_news_manager",deleted=1),code=303)
+
+
+
+# Preserve old public bookmarks on the staging Worker, without enabling
+# legacy state-changing endpoints or changing the live domain.
+@app.get("/browse")
+def legacy_browse():
+    params = {name: request.args.get(name, "") for name in
+              ("q", "category", "genre", "year", "order") if name in request.args}
+    return redirect(url_for("browse", **params), code=302)
+
+
+@app.get("/categories")
+def legacy_categories():
+    return redirect(url_for("category_index"), code=302)
+
+
+@app.get("/workprint/<int:mid>")
+def legacy_film(mid):
+    return redirect(url_for("detail", mid=mid), code=302)
+
+
+@app.get("/news/<int:aid>")
+def legacy_news(aid):
+    return redirect(url_for("article_detail", aid=aid), code=302)
+
+
+@app.get("/uploads/<path:name>")
+def legacy_upload(name):
+    return uploads(name)
+
+
+@app.get("/contact")
+def legacy_contact():
+    return redirect(url_for("preview_contact"), code=302)
+
+
+@app.get("/donate")
+def legacy_donate():
+    return redirect(url_for("preview_donate"), code=302)
+
+
+@app.get("/members/login")
+def legacy_member_login():
+    return redirect(url_for("preview_member_login"), code=302)
+
+
+@app.get("/members/register")
+def legacy_member_register():
+    return redirect(url_for("preview_member_register"), code=302)
+
+
+@app.get("/members/account")
+def legacy_member_account():
+    return redirect(url_for("preview_member_account"), code=302)
+
+
+@app.get("/login")
+def legacy_admin_login():
+    return redirect(url_for("preview_admin_login"), code=302)
+
+
+@app.get("/robots.txt")
+def staging_robots():
+    return Response("User-agent: *\nDisallow: /\n", mimetype="text/plain")
 
 
 Default = wsgi.entrypoint(app)
